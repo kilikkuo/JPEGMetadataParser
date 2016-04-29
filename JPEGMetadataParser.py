@@ -348,17 +348,25 @@ def log(msg, tag=None, op=None):
         lstMsgTags.remove(tag)
 
 class IFDEntry:
-    def __init__(self, tag, format, comps, offset):
+    def __init__(self, tag, bytesPerComp):
         self.__tagNumber = tag
-        self.__dataFormat = format
-        self.__numberOfComponents = comps
-        self.__dataValueOffset = offset
+        self.__bytesPerComponent = 0
+        self.__value = None
 
+    def setData(self, value):
+        self.__value = value
+
+EXIF_TIFF_DATAFORMAT_LIST = [1,1,1,2,4,8,1,1,2,4,8,4,8]
 class JPEGMetadataParser:
     def __init__(self):
         self._file = None
         self._orderAPP1 = None
         pass
+
+    def __getChar(self):
+        if not self._file:
+            assert False
+        return self._file.read(1)
 
     def __getcToOrd(self):
         if not self._file:
@@ -370,37 +378,104 @@ class JPEGMetadataParser:
 
     def __getLen2(self, order=BYTE_ALIGN_MOTOROLA):
         # 0x4d4d for MM / 0x4949 for II.
-        lenLow = self.__getcToOrd()
-        lenHigh = self.__getcToOrd()
+        L = self.__getcToOrd()
+        H = self.__getcToOrd()
         if order == BYTE_ALIGN_MOTOROLA:
-            return lenLow << 8 | lenHigh
+            return L << 8 | H
         else:
-            return lenLow | lenHigh << 8
+            return L | H << 8
 
     def __getLen4(self, order=BYTE_ALIGN_MOTOROLA):
         # 0x4d4d for MM / 0x4949 for II.
-        lenLL = self.__getcToOrd()
-        lenLH = self.__getcToOrd()
-        lenHL = self.__getcToOrd()
-        lenHH = self.__getcToOrd()
+        LL = self.__getcToOrd()
+        LH = self.__getcToOrd()
+        HL = self.__getcToOrd()
+        HH = self.__getcToOrd()
         if order == BYTE_ALIGN_MOTOROLA:
-            return lenLL << 24 | lenLH << 16 | lenHL << 8 | lenHH
+            return LL << 24 | LH << 16 | HL << 8 | HH
         else:
-            return lenLL | lenLH << 8 | lenHL << 16 | lenHH << 24
+            return LL | LH << 8 | HL << 16 | HH << 24
+
+    def __getLen8(self, order=BYTE_ALIGN_MOTOROLA):
+        # 0x4d4d for MM / 0x4949 for II.
+        LLL = self.__getcToOrd()
+        LLH = self.__getcToOrd()
+        LHL = self.__getcToOrd()
+        LHH = self.__getcToOrd()
+        HLL = self.__getcToOrd()
+        HLH = self.__getcToOrd()
+        HHL = self.__getcToOrd()
+        HHH = self.__getcToOrd()
+        if order == BYTE_ALIGN_MOTOROLA:
+            return LLL << 56 | LLH << 48 | LHL << 40 | LHH << 32 |\
+                    HLL << 24 | HLH << 16 | HHL << 8 | HHH
+        else:
+            return LLL | LLH << 8 | LHL << 16 | LHH << 24 |\
+                    HLL << 32 | HLH << 40 | HHL << 48 | HHH << 56
+
+    def __getDataFromFormat(self, tag, format, size):
+        from array import array
+        bytesPerComp = EXIF_TIFF_DATAFORMAT_LIST[format]
+        entry = IFDEntry(tag, bytesPerComp)
+        print 'format(%d)/Size(%d)'%(format, size)
+        lstValue = []
+        if format in [1, 6, 7]:
+            # unsigned byte / # signed byte / # undefined
+            data = array('b', self._file.read(size))
+            pass
+        elif format == 2:
+            # ascii string
+            data = array('c', self._file.read(size))
+            pass
+        elif format in [3, 8]:
+            # unsigned short / # signed short
+            while size > 0:
+                v = self.__getLen2(self._orderAPP1)
+                lstValue.append(v)
+                size -= 2
+            encode = 'H' if format == 3 else 'h'
+            data = array('H', lstValue)
+            pass
+        elif format in [4, 9]:
+            # unsigned long / # signed long
+            while size > 0:
+                v = self.__getLen4(self._orderAPP1)
+                lstValue.append(v)
+                size -= 4
+            encode = 'L' if format == 4 else 'l'
+            data = array('L', lstValue)
+            pass
+        elif format in [5, 10]:
+            # unsigned rational / # signed rational
+            while size > 0:
+                numerator = self.__getLen4(self._orderAPP1)
+                denominator = self.__getLen4(self._orderAPP1)
+                size -= 8
+                lstValue.append(float(numerator) / float(denominator))
+            data = array('d', lstValue)
+            pass
+        elif format == 11:
+            # signed float
+            while size > 0:
+                v = self.__getLen4(self._orderAPP1)
+                lstValue.append(v)
+                size -= 4
+            data = array('f', lstValue)
+            pass
+        elif format == 12:
+            # double float
+            while size > 0:
+                numerator = self.__getLen4(self._orderAPP1)
+                denominator = self.__getLen4(self._orderAPP1)
+                size -= 8
+                lstValue.append(float(numerator) / float(denominator))
+            data = array('d', lstValue)
+            pass
+        entry.setData(data)
+        log(" --- tag(%s), %s"%(hex(tag), str(data)))
 
     def __parseBasicIFD(self, base, start, end):
         log("Enter", "[BasicIFD]", "add")
-        def checkEntryValid(format, comps):
-            lstDataFormat = [1,1,2,4,8,1,1,2,4,8,4,8]
-            if 0 == format or format > len(lstDataFormat):
-                return False
-            bytesPerComp = lstDataFormat[format]
-            if bytesPerComp * comps > 4:
-                offset = self.__getLen4(self._orderAPP1)
-                if offset <= start and offset >= end:
-                    return False
-                self._file.seek(offset)
-            return True
 
         if not self._file:
             assert False
@@ -411,13 +486,27 @@ class JPEGMetadataParser:
             tag = self.__getLen2(self._orderAPP1)
             dataFormat = self.__getLen2(self._orderAPP1)
             numOfComps = self.__getLen4(self._orderAPP1)
+            posBeforeDataOffset = self._file.tell()
             dataOffset = self.__getLen4(self._orderAPP1)
+            posAfterDataOffset = self._file.tell()
 
-            curPos = self._file.tell()
-            isValid = checkEntryValid(dataFormat, numOfComps)
-            if isValid:
-                entry = IFDEntry(tag, dataFormat, numOfComps, dataOffset)
-                log("Entry(%d), %s, %d, %d, %d"%(idx, hex(tag), dataFormat, numOfComps, dataOffset))
+            if 0 == dataFormat or dataFormat >= len(EXIF_TIFF_DATAFORMAT_LIST):
+                assert False, "dataformat incorrect = %d"%(dataFormat)
+                continue
+            bytesPerComp = EXIF_TIFF_DATAFORMAT_LIST[dataFormat]
+            dataSize = bytesPerComp * numOfComps
+            if dataSize > 4:
+                targetOffset = base + dataOffset
+                if targetOffset <= start or targetOffset >= end:
+                    continue
+                else:
+                    self._file.seek(targetOffset)
+            else:
+                self._file.seek(posBeforeDataOffset)
+
+            self.__getDataFromFormat(tag, dataFormat, dataSize)
+            self._file.seek(posAfterDataOffset)
+
         log("Leave", "[BasicIFD]", "remove")
 
     def __parseAPP1(self, base, start, end):
@@ -491,7 +580,7 @@ class JPEGMetadataParser:
             self._file.seek(curPos+len-2)
 
 import os
-fPath = "./images/brownie.jpg"
+fPath = "./images/Sample.JPG"
 fullPath = os.path.abspath(fPath)
 
 jpgParser = JPEGMetadataParser()
