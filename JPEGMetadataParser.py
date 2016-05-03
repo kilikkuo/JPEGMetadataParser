@@ -781,6 +781,27 @@ class JPEGMetadataParser:
                 subExifOffset = entry.getValue()
                 self._file.seek(base+subExifOffset)
                 self.__parseExifSubIFD(base, start, end)
+            elif entry.getTag() == TAGID_SubIFDs:
+                log("SubIFDs")
+                pass
+            elif entry.getTag() == TAGID_GPSIFD:
+                log("GPSIFD")
+                pass
+            elif entry.getTag() == TAGID_IPTC:
+                log("IPTC")
+                pass
+            elif entry.getTag() == TAGID_XMP:
+                log("XMP")
+                pass
+            elif entry.getTag() == TAGID_Photoshop:
+                log("Photoshop")
+                pass
+            elif entry.getTag() == TAGID_ICCProfile:
+                log("ICCProfile")
+                pass
+            elif entry.getTag() == TAGID_DNGPrivateData:
+                log("DNGPrivateData")
+                pass
 
             self._file.seek(posAfterDataOffset)
 
@@ -844,9 +865,10 @@ class JPEGMetadataParser:
             offsetToNextIFD = self.__getLen4(self._orderAPP1)
             log("offsetToNextIFD = %s"%(hex(offsetToNextIFD)))
 
-    def __parseXMP(self):
+    def __parseXMP(self, data, dataLen):
         if not self._file:
             assert False
+        log("xmp bufferlen(%d), url = %s"%(dataLen, data))
 
     def parse(self, filePath):
         self._file = open(filePath)
@@ -862,9 +884,9 @@ class JPEGMetadataParser:
                 break
             marker = self.__getcToOrd()
             log("%s-%s"%(hex(first), hex(marker)))
-            len = self.__getLen2()
+            length = self.__getLen2()
             curPos = self._file.tell()
-            log("len= %d, curPos=%d"%(len,curPos))
+            log("length= %d, curPos=%d"%(length,curPos))
 
             if marker in [JPEG_EOI, JPEG_SOS]:
                 log("EOI or SOS ... exit parsing")
@@ -878,8 +900,14 @@ class JPEGMetadataParser:
                 header = self._file.read(4)
                 log("header = %s"%(header))
                 if header.lower() == 'exif':
-                    self.__parseAPP1(curPos+6, curPos, curPos+len-2)
+                    self.__parseAPP1(curPos+6, curPos, curPos+length-2)
                 elif header.lower() == 'http':
+                    self._file.seek(curPos)
+                    xmpBuffer = self._file.read(length)
+                    checkURL = "http://ns.adobe.com/xap/1.0/"
+                    if xmpBuffer.startswith(checkURL):
+                        headLen = len(checkURL)
+                        self.__parseXMP(xmpBuffer[headLen:], length-headLen)
                     pass
                 log("Leave", "[APP1]", "remove")
 
@@ -891,11 +919,14 @@ class JPEGMetadataParser:
                 log("Enter", "[APP13]", "add")
                 log("Leave", "[APP13]", "remove")
                 pass # TBD
-            self._file.seek(curPos+len-2)
+            self._file.seek(curPos+length-2)
 
 import os
-fPath = "./images/Sample.JPG"
+#fPath = "./images/Sample.JPG"
 #fPath = "./images/brownie.jpg"
+#fPath = "./images/tampa_AdobeRGB.jpg"
+fPath = "./images/exif-iptc.jpg"
+
 fullPath = os.path.abspath(fPath)
 
 jpgParser = JPEGMetadataParser()
