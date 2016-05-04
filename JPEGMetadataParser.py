@@ -1,3 +1,8 @@
+"""
+ By Kilik Kuo. Released under the MIT license.
+ See file LICENSE for detail or copy at https://opensource.org/licenses/MIT
+"""
+
 # exif tag definition.
 # http://www.media.mit.edu/pia/Research/deepview/exif.html
 # ====
@@ -868,7 +873,15 @@ class JPEGMetadataParser:
     def __parseXMP(self, data, dataLen):
         if not self._file:
             assert False
-        log("xmp bufferlen(%d), url = %s"%(dataLen, data))
+
+        s1 = data.find('<?')
+        s2 = data.find('?>')
+        s3 = data.find('<?', s2)
+        s4 = data.find('?>', s3)
+        dataCut = data[s2+2:s3]
+        from XMPParser import XMPParser
+        meta = XMPParser.parse(dataCut)
+        log('XMP = %s'%(str(meta)))
 
     def parse(self, filePath):
         self._file = open(filePath)
