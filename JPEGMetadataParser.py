@@ -883,6 +883,14 @@ class JPEGMetadataParser:
         meta = XMPParser.parse(dataCut)
         log('XMP = %s'%(str(meta)))
 
+    def __parseAPP2(self, length):
+        iptcData = self._file.read(length)
+        iccIdentifier = "ICC_PROFILE"
+        if (iptcData.startswith(iccIdentifier)):
+            print iptcData
+        else:
+            assert False
+
     def parse(self, filePath):
         self._file = open(filePath)
         self._file.seek(0)
@@ -926,6 +934,7 @@ class JPEGMetadataParser:
 
             elif marker == JPEG_APP2:
                 log("Enter", "[APP2]", "add")
+                self.__parseAPP2(length)
                 log("Leave", "[APP2]", "remove")
                 pass # TBD
             elif marker == JPEG_APP13:
@@ -937,8 +946,9 @@ class JPEGMetadataParser:
 import os
 #fPath = "./images/Sample.JPG"
 #fPath = "./images/brownie.jpg"
-#fPath = "./images/tampa_AdobeRGB.jpg"
-fPath = "./images/exif-iptc.jpg"
+fPath = "./images/tampa_AdobeRGB.jpg"
+#fPath = "./images/exif-iptc.jpg"
+#fPath = "./images/Reagan.jpg"
 
 fullPath = os.path.abspath(fPath)
 
