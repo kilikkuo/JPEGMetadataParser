@@ -884,12 +884,69 @@ class JPEGMetadataParser:
         log('XMP = %s'%(str(meta)))
 
     def __parseAPP2(self, length):
+        curPos = self._file.tell()
         iptcData = self._file.read(length)
         iccIdentifier = "ICC_PROFILE"
         if (iptcData.startswith(iccIdentifier)):
-            print iptcData
+            iccData = iptcData[len(iccIdentifier)+1:]
+            iccLen = 0
+            if ord(iccData[0]) == 0x01 and ord(iccData[1]) == 0x01:
+                iccLen = length -14
+            elif ord(iccData[0]) == 0x01: # multi-page, support header only
+                iccLen = 128
+            else:
+                log("Wrong ICC Profile format !")
+                return
+            self._file.seek(curPos+14)
+            self.__parseICCProfile(iccData[2:], iccLen)
         else:
+            log("Wrong ICC Profile format !")
             assert False
+
+    def __parseICCProfile(self, iccData, iccLen):
+        # Refer to http://blog.fpmurphy.com/2012/03/extract-icc-profile-from-images.html
+        basePos = self._file.tell()
+
+        def parseHeader():
+            profileSize = self.__getLen4()
+            cmmType = ''.join(self.__getChar() for _ in xrange(4))
+            lstVersion = [self.__getcToOrd() for _ in xrange(4)]
+            print str(lstVersion)
+            deviceClass = ''.join(self.__getChar() for _ in xrange(4))
+            print "Profile Size = %d, %s, %s"%(profileSize, cmmType, deviceClass)
+            colorSpaceOfData = ''.join(self.__getChar() for _ in xrange(4))
+            pcs = ''.join(self.__getChar() for _ in xrange(4))
+            print "CS Data, pcs = %s, %s"%(colorSpaceOfData, pcs)
+            lstDatetime = [self.__getcToOrd() for _ in xrange(12)]
+            print str(lstDatetime)
+            signature = ''.join(self.__getChar() for _ in xrange(4))
+            primaryPlatform = ''.join(self.__getChar() for _ in xrange(4))
+            print "signature, primaryPlatform = %s, %s"%(signature, primaryPlatform)
+            lstProfileFlags = [hex(self.__getcToOrd()) for _ in xrange(4)]
+            print str(lstProfileFlags)
+            deviceManufacturer = ''.join(self.__getChar() for _ in xrange(4))
+            deviceModel = ''.join(self.__getChar() for _ in xrange(4))
+            print "deviceManufacturer, deviceModel = %s, %s"%(deviceManufacturer, deviceModel)
+            lstDeviceAttributes = [hex(self.__getcToOrd()) for _ in xrange(8)]
+            print str(lstDeviceAttributes)
+            renderingIntent, zeroPadding = self.__getLen2(), self.__getLen2()
+            print "Rendering Intent = %d"%(renderingIntent)
+            lstCIEXYZValue = [hex(self.__getcToOrd()) for _ in xrange(12)]
+            print str(lstCIEXYZValue)
+            profileCreator = ''.join(self.__getChar() for _ in xrange(4))
+            print "Profile Creator = %s"%(profileCreator)
+            profileID = [hex(self.__getcToOrd()) for _ in xrange(16)]
+            print str(profileID)
+            reserved = [hex(self.__getcToOrd()) for _ in xrange(28)]
+            print str(reserved)
+
+        def parseTagTable():
+            pass
+            #tagCount = self.__getLen4()
+            #print "Tag count = %d"%(tagCount)
+
+        parseHeader()
+        parseTagTable()
 
     def parse(self, filePath):
         self._file = open(filePath)
