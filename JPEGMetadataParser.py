@@ -920,8 +920,8 @@ class JPEGMetadataParser:
             pcs = ''.join(self.__getChar() for _ in xrange(4))
             log("CS Data, pcs = %s, %s"%(colorSpaceOfData, pcs))
 
-            lstDatetime = [self.__getcToOrd() for _ in xrange(12)]
-            log("Datatime = %s"%str(lstDatetime))
+            lstDatetime = [self.__getLen2() for _ in xrange(6)]
+            log("Datatime = Y(%d)M(%d)D(%d)H(%d)M(%d)S(%d)"%tuple(lstDatetime))
 
             signature = ''.join(self.__getChar() for _ in xrange(4))
             primaryPlatform = ''.join(self.__getChar() for _ in xrange(4))
