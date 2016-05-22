@@ -693,7 +693,7 @@ class JPEGMetadataParser:
         from array import array
         bytesPerComp = EXIF_TIFF_DATAFORMAT_LIST[format]
         entry = IFDEntry(tag, bytesPerComp)
-        print 'format(%d)/Size(%d)'%(format, size)
+        #print 'format(%d)/Size(%d)'%(format, size)
         lstValue = []
         if format in [1, 6, 7]:
             # unsigned byte / # signed byte / # undefined
@@ -906,41 +906,68 @@ class JPEGMetadataParser:
     def __parseICCProfile(self, iccData, iccLen):
         # Refer to http://blog.fpmurphy.com/2012/03/extract-icc-profile-from-images.html
         basePos = self._file.tell()
-
         def parseHeader():
+            log("Enter", "[ICCProfileHeader]", "add")
             profileSize = self.__getLen4()
             cmmType = ''.join(self.__getChar() for _ in xrange(4))
             lstVersion = [self.__getcToOrd() for _ in xrange(4)]
-            print str(lstVersion)
+            log("ICCProfile version = %s"%str(lstVersion))
+
             deviceClass = ''.join(self.__getChar() for _ in xrange(4))
-            print "Profile Size = %d, %s, %s"%(profileSize, cmmType, deviceClass)
+            log("Profile Size = %d, %s, %s"%(profileSize, cmmType, deviceClass))
+
             colorSpaceOfData = ''.join(self.__getChar() for _ in xrange(4))
             pcs = ''.join(self.__getChar() for _ in xrange(4))
-            print "CS Data, pcs = %s, %s"%(colorSpaceOfData, pcs)
+            log("CS Data, pcs = %s, %s"%(colorSpaceOfData, pcs))
+
             lstDatetime = [self.__getcToOrd() for _ in xrange(12)]
-            print str(lstDatetime)
+            log("Datatime = %s"%str(lstDatetime))
+
             signature = ''.join(self.__getChar() for _ in xrange(4))
             primaryPlatform = ''.join(self.__getChar() for _ in xrange(4))
-            print "signature, primaryPlatform = %s, %s"%(signature, primaryPlatform)
+            log("signature, primaryPlatform = %s, %s"%(signature, primaryPlatform))
+
             lstProfileFlags = [hex(self.__getcToOrd()) for _ in xrange(4)]
-            print str(lstProfileFlags)
+            log("Profile Flags = %s"%str(lstProfileFlags))
+
             deviceManufacturer = ''.join(self.__getChar() for _ in xrange(4))
             deviceModel = ''.join(self.__getChar() for _ in xrange(4))
-            print "deviceManufacturer, deviceModel = %s, %s"%(deviceManufacturer, deviceModel)
+            log("deviceManufacturer, deviceModel = %s, %s"%(deviceManufacturer, deviceModel))
+
             lstDeviceAttributes = [hex(self.__getcToOrd()) for _ in xrange(8)]
-            print str(lstDeviceAttributes)
+            log("Device Attributes = %s"%str(lstDeviceAttributes))
+
             renderingIntent, zeroPadding = self.__getLen2(), self.__getLen2()
-            print "Rendering Intent = %d"%(renderingIntent)
-            lstCIEXYZValue = [hex(self.__getcToOrd()) for _ in xrange(12)]
-            print str(lstCIEXYZValue)
+            log("Rendering Intent = %d"%(renderingIntent))
+
+            intX, intY, intZ = self.__getLen4(), self.__getLen4(), self.__getLen4()
+            import struct
+            X = struct.unpack('f', struct.pack('i', intX))
+            Y = struct.unpack('f', struct.pack('i', intY))
+            Z = struct.unpack('f', struct.pack('i', intZ))
+            CIEXYZ_X = X[0] / Y[0]
+            CIEXYZ_Y = Y[0] / Y[0]
+            CIEXYZ_Z = Z[0] / Y[0]
+            log("CIEXYZ = (%f, %f, %f)"%(CIEXYZ_X, CIEXYZ_Y, CIEXYZ_Z))
+
             profileCreator = ''.join(self.__getChar() for _ in xrange(4))
-            print "Profile Creator = %s"%(profileCreator)
+            log("Profile Creator = %s"%(profileCreator))
             profileID = [hex(self.__getcToOrd()) for _ in xrange(16)]
-            print str(profileID)
+            log("Profile ID = %s"%(str(profileID)))
             reserved = [hex(self.__getcToOrd()) for _ in xrange(28)]
-            print str(reserved)
+            log("Reserved = %s"%(str(reserved)))
+            log("Leave", "[ICCProfileHeader]", "remove")
 
         def parseTagTable():
+            log("Enter", "[ICCProfileTagTable]", "add")
+            tagCount = self.__getLen4()
+            log("Tag count = %d"%(tagCount))
+            for idx in xrange(tagCount):
+                sig = ''.join(self.__getChar() for _ in xrange(4))
+                offset, size = self.__getLen4(), self.__getLen4()
+                log("Tag sig(%s) / offset(%d) / size(%d)"%(sig, offset, size))
+
+            log("Leave", "[ICCProfileTagTable]", "remove")
             pass
             #tagCount = self.__getLen4()
             #print "Tag count = %d"%(tagCount)
