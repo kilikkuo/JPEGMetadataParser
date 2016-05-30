@@ -963,9 +963,65 @@ class JPEGMetadataParser:
             tagCount = self.__getLen4()
             log("Tag count = %d"%(tagCount))
             for idx in xrange(tagCount):
+                tagStartPos = self._file.tell()
                 sig = ''.join(self.__getChar() for _ in xrange(4))
-                offset, size = self.__getLen4(), self.__getLen4()
+                offset = self.__getLen4()
+                size = self.__getLen4()
                 log("Tag sig(%s) / offset(%d) / size(%d)"%(sig, offset, size))
+                self._file.seek(basePos+offset)
+                typeDesc = ''.join(self.__getChar() for _ in xrange(4))
+                if typeDesc == "curv":
+                    reserved = self.__getLen4()
+                    assert reserved == 0
+                    assert size == 14
+                    count = self.__getLen4()
+                    log(" count = %d"%(count))
+                    if count == 0:
+                        exp = 1.0
+                    else:
+                        first, second = self.__getcToOrd(), self.__getcToOrd()
+                        exp = first + float(second/256.0)
+                    log(" exp = %f"%(exp))
+                elif typeDesc == "XYZ ":
+                    reserved = self.__getLen4()
+                    assert reserved == 0
+                    assert size == 20
+                    intX, intY, intZ = self.__getLen4(), self.__getLen4(), self.__getLen4()
+                    if intX != 0 and intY != 0 and intZ != 0:
+                        import struct
+                        X = struct.unpack('f', struct.pack('i', intX))
+                        Y = struct.unpack('f', struct.pack('i', intY))
+                        Z = struct.unpack('f', struct.pack('i', intZ))
+                        CIEXYZ_X = X[0] / Y[0]
+                        CIEXYZ_Y = Y[0] / Y[0]
+                        CIEXYZ_Z = Z[0] / Y[0]
+                        log("CIEXYZ = (%f, %f, %f)"%(CIEXYZ_X, CIEXYZ_Y, CIEXYZ_Z))
+                    else:
+                        log("CIEXYZ = (%f, %f, %f)"%(0, 0, 0))
+                elif typeDesc == "text":
+                    text = ''.join(self.__getChar() for _ in xrange(size-4))
+                    log(" txt = %s"%(text))
+                elif typeDesc == "desc":
+                    reserved = self.__getLen4()
+                    assert reserved == 0
+                    asciiCount = self.__getLen4()
+                    log(" asciiCount = %d"%(asciiCount))
+                    asciiInvariantDesc = self._file.read(asciiCount)
+                    log(" asciiInvariantDesc = %s"%(asciiInvariantDesc))
+                    uniLangCode = self.__getLen4()
+                    uniCount = self.__getLen4()
+                    log(" uniLangCode, uniCount = %d, %d"%(uniLangCode, uniCount))
+                    if uniLangCode != 0 and uniCount != 0:
+                        uniLocalizableDesc = self._file.read(uniCount)
+                        log(" uniLocalizableDesc = %s"%(uniLocalizableDesc))
+                    scriptCode = self.__getLen2()
+                    scriptCount = self.__getcToOrd()
+                    log(" scriptCode, scriptCount = %d, %d"%(scriptCode, scriptCount))
+                    if scriptCode != 0 and scriptCount != 0:
+                        localMacintoshDesc = self._file.read(scriptCount)
+                        log(" localMacintoshDesc = %s"%(localMacintoshDesc))
+                    pass
+                self._file.seek(tagStartPos+12)
 
             log("Leave", "[ICCProfileTagTable]", "remove")
             pass
