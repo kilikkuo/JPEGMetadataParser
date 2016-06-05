@@ -249,363 +249,364 @@ generation by digital still cameras. Exif is the abbreviation of 'Exchangeable
 image file format', though this can be argued to be a misnomer, as Exif does
 not relate to TIFF like e.g. JFIF relates to JPEG.
 """
-TAGID_ExposureTime                    = 0x829A
-TAGID_FNumber                         = 0x829D
-TAGID_ExposureProgram                 = 0x8822
-TAGID_SpectralSensitivity             = 0x8824
-TAGID_ISOSpeedRatings                 = 0x8827
-TAGID_OECF                            = 0x8828
-TAGID_ExifVersion                     = 0x9000
-TAGID_DateTimeOriginal                = 0x9003
-TAGID_DateTimeDigitized               = 0x9004
-TAGID_ComponentsConfiguration         = 0x9101
-TAGID_CompressedBitsPerPixel          = 0x9102
-TAGID_ShutterSpeedValue               = 0x9201
-TAGID_ApertureValue                   = 0x9202
-TAGID_BrightnessValue                 = 0x9203
-TAGID_ExposureBiasValue               = 0x9204
-TAGID_MaxApertureValue                = 0x9205
-TAGID_SubjectDistance                 = 0x9206
-TAGID_MeteringMode                    = 0x9207
-TAGID_LightSource                     = 0x9208
-TAGID_Flash                           = 0x9209
-TAGID_FocalLength                     = 0x920A
-TAGID_SubjectArea                     = 0x9214
-TAGID_MakerNote                       = 0x927C
-TAGID_UserComment                     = 0x9286
-TAGID_SubsecTime                      = 0x9290
-TAGID_SubsecTimeOriginal              = 0x9291
-TAGID_SubsecTimeDigitized             = 0x9292
-TAGID_FlashpixVersion                 = 0xA000
-TAGID_ColorSpace                      = 0xA001
-TAGID_PixelXDimension                 = 0xA002
-TAGID_PixelYDimension                 = 0xA003
-TAGID_RelatedSoundFile                = 0xA004
-TAGID_FlashEnergy                     = 0xA20B
-TAGID_SpatialFrequencyResponse        = 0xA20C
-TAGID_FocalPlaneXResolution           = 0xA20E
-TAGID_FocalPlaneYResolution           = 0xA20F
-TAGID_FocalPlaneResolutionUnit        = 0xA210
-TAGID_SubjectLocation                 = 0xA214
-TAGID_ExposureIndex                   = 0xA215
-TAGID_SensingMethod                   = 0xA217
-TAGID_FileSource                      = 0xA300
-TAGID_SceneType                       = 0xA301
-TAGID_CFAPattern                      = 0xA302
-TAGID_CustomRendered                  = 0xA401
-TAGID_ExposureMode                    = 0xA402
-TAGID_WhiteBalance                    = 0xA403
-TAGID_DigitalZoomRatio                = 0xA404
-TAGID_FocalLengthIn35mmFilm           = 0xA405
-TAGID_SceneCaptureType                = 0xA406
-TAGID_GainControl                     = 0xA407
-TAGID_Contrast                        = 0xA408
-TAGID_Saturation                      = 0xA409
-TAGID_Sharpness                       = 0xA40A
-TAGID_DeviceSettingDescription        = 0xA40B
-TAGID_SubjectDistanceRange            = 0xA40C
-TAGID_ImageUniqueID                   = 0xA420
+TAGID_EXIF_ExposureTime                    = 0x829A
+TAGID_EXIF_FNumber                         = 0x829D
+TAGID_EXIF_ExposureProgram                 = 0x8822
+TAGID_EXIF_SpectralSensitivity             = 0x8824
+TAGID_EXIF_ISOSpeedRatings                 = 0x8827
+TAGID_EXIF_OECF                            = 0x8828
+TAGID_EXIF_ExifVersion                     = 0x9000
+TAGID_EXIF_DateTimeOriginal                = 0x9003
+TAGID_EXIF_DateTimeDigitized               = 0x9004
+TAGID_EXIF_ComponentsConfiguration         = 0x9101
+TAGID_EXIF_CompressedBitsPerPixel          = 0x9102
+TAGID_EXIF_ShutterSpeedValue               = 0x9201
+TAGID_EXIF_ApertureValue                   = 0x9202
+TAGID_EXIF_BrightnessValue                 = 0x9203
+TAGID_EXIF_ExposureBiasValue               = 0x9204
+TAGID_EXIF_MaxApertureValue                = 0x9205
+TAGID_EXIF_SubjectDistance                 = 0x9206
+TAGID_EXIF_MeteringMode                    = 0x9207
+TAGID_EXIF_LightSource                     = 0x9208
+TAGID_EXIF_Flash                           = 0x9209
+TAGID_EXIF_FocalLength                     = 0x920A
+TAGID_EXIF_SubjectArea                     = 0x9214
+TAGID_EXIF_MakerNote                       = 0x927C
+TAGID_EXIF_UserComment                     = 0x9286
+TAGID_EXIF_SubsecTime                      = 0x9290
+TAGID_EXIF_SubsecTimeOriginal              = 0x9291
+TAGID_EXIF_SubsecTimeDigitized             = 0x9292
+TAGID_EXIF_FlashpixVersion                 = 0xA000
+TAGID_EXIF_ColorSpace                      = 0xA001
+TAGID_EXIF_PixelXDimension                 = 0xA002
+TAGID_EXIF_PixelYDimension                 = 0xA003
+TAGID_EXIF_RelatedSoundFile                = 0xA004
+TAGID_EXIF_FlashEnergy                     = 0xA20B
+TAGID_EXIF_SpatialFrequencyResponse        = 0xA20C
+TAGID_EXIF_FocalPlaneXResolution           = 0xA20E
+TAGID_EXIF_FocalPlaneYResolution           = 0xA20F
+TAGID_EXIF_FocalPlaneResolutionUnit        = 0xA210
+TAGID_EXIF_SubjectLocation                 = 0xA214
+TAGID_EXIF_ExposureIndex                   = 0xA215
+TAGID_EXIF_SensingMethod                   = 0xA217
+TAGID_EXIF_FileSource                      = 0xA300
+TAGID_EXIF_SceneType                       = 0xA301
+TAGID_EXIF_CFAPattern                      = 0xA302
+TAGID_EXIF_CustomRendered                  = 0xA401
+TAGID_EXIF_ExposureMode                    = 0xA402
+TAGID_EXIF_WhiteBalance                    = 0xA403
+TAGID_EXIF_DigitalZoomRatio                = 0xA404
+TAGID_EXIF_FocalLengthIn35mmFilm           = 0xA405
+TAGID_EXIF_SceneCaptureType                = 0xA406
+TAGID_EXIF_GainControl                     = 0xA407
+TAGID_EXIF_Contrast                        = 0xA408
+TAGID_EXIF_Saturation                      = 0xA409
+TAGID_EXIF_Sharpness                       = 0xA40A
+TAGID_EXIF_DeviceSettingDescription        = 0xA40B
+TAGID_EXIF_SubjectDistanceRange            = 0xA40C
+TAGID_EXIF_ImageUniqueID                   = 0xA420
 # ====
 # GPS
 """
 GPS tags are used to encode positioning information, related largely to image
 generation by digital still cameras.
 """
-TAGID_GPSVersionID                    = 0x0000
-TAGID_GPSLatitudeRef                  = 0x0001
-TAGID_GPSLatitude                     = 0x0002
-TAGID_GPSLongitudeRef                 = 0x0003
-TAGID_GPSLongitude                    = 0x0004
-TAGID_GPSAltitudeRef                  = 0x0005
-TAGID_GPSAltitude                     = 0x0006
-TAGID_GPSTimeStamp                    = 0x0007
-TAGID_GPSSatellites                   = 0x0008
-TAGID_GPSStatus                       = 0x0009
-TAGID_GPSMeasureMode                  = 0x000A
-TAGID_GPSDOP                          = 0x000B
-TAGID_GPSSpeedRef                     = 0x000C
-TAGID_GPSSpeed                        = 0x000D
-TAGID_GPSTrackRef                     = 0x000E
-TAGID_GPSTrack                        = 0x000F
-TAGID_GPSImgDirectionRef              = 0x0010
-TAGID_GPSImgDirection                 = 0x0011
-TAGID_GPSMapDatum                     = 0x0012
-TAGID_GPSDestLatitudeRef              = 0x0013
-TAGID_GPSDestLatitude                 = 0x0014
-TAGID_GPSDestLongitudeRef             = 0x0015
-TAGID_GPSDestLongitude                = 0x0016
-TAGID_GPSDestBearingRef               = 0x0017
-TAGID_GPSDestBearing                  = 0x0018
-TAGID_GPSDestDistanceRef              = 0x0019
-TAGID_GPSDestDistance                 = 0x001A
-TAGID_GPSProcessingMethod             = 0x001B
-TAGID_GPSAreaInformation              = 0x001C
-TAGID_GPSDateStamp                    = 0x001D
-TAGID_GPSDifferential                 = 0x001E
+TAGID_GPS_GPSVersionID                    = 0x0000
+TAGID_GPS_GPSLatitudeRef                  = 0x0001
+TAGID_GPS_GPSLatitude                     = 0x0002
+TAGID_GPS_GPSLongitudeRef                 = 0x0003
+TAGID_GPS_GPSLongitude                    = 0x0004
+TAGID_GPS_GPSAltitudeRef                  = 0x0005
+TAGID_GPS_GPSAltitude                     = 0x0006
+TAGID_GPS_GPSTimeStamp                    = 0x0007
+TAGID_GPS_GPSSatellites                   = 0x0008
+TAGID_GPS_GPSStatus                       = 0x0009
+TAGID_GPS_GPSMeasureMode                  = 0x000A
+TAGID_GPS_GPSDOP                          = 0x000B
+TAGID_GPS_GPSSpeedRef                     = 0x000C
+TAGID_GPS_GPSSpeed                        = 0x000D
+TAGID_GPS_GPSTrackRef                     = 0x000E
+TAGID_GPS_GPSTrack                        = 0x000F
+TAGID_GPS_GPSImgDirectionRef              = 0x0010
+TAGID_GPS_GPSImgDirection                 = 0x0011
+TAGID_GPS_GPSMapDatum                     = 0x0012
+TAGID_GPS_GPSDestLatitudeRef              = 0x0013
+TAGID_GPS_GPSDestLatitude                 = 0x0014
+TAGID_GPS_GPSDestLongitudeRef             = 0x0015
+TAGID_GPS_GPSDestLongitude                = 0x0016
+TAGID_GPS_GPSDestBearingRef               = 0x0017
+TAGID_GPS_GPSDestBearing                  = 0x0018
+TAGID_GPS_GPSDestDistanceRef              = 0x0019
+TAGID_GPS_GPSDestDistance                 = 0x001A
+TAGID_GPS_GPSProcessingMethod             = 0x001B
+TAGID_GPS_GPSAreaInformation              = 0x001C
+TAGID_GPS_GPSDateStamp                    = 0x001D
+TAGID_GPS_GPSDifferential                 = 0x001E
 # ====
 # Interoperability
 """
 The single Interoperability tag is used to encode compability information,
 related to image generation by digital still cameras.
 """
-TAGID_InteroperabilityIndex           = 0x0001
+TAGID_INTEROPERABILITY_InteroperabilityIndex    = 0x0001
 # ===========================================================
-{0: 'GPSVersionID',
- 1: 'GPSLatitudeRef',
- 2: 'GPSLatitude',
- 3: 'GPSLongitudeRef',
- 4: 'GPSLongitude',
- 5: 'GPSAltitudeRef',
- 6: 'GPSAltitude',
- 7: 'GPSTimeStamp',
- 8: 'GPSSatellites',
- 9: 'GPSStatus',
- 10: 'GPSMeasureMode',
- 11: 'GPSDOP',
- 12: 'GPSSpeedRef',
- 13: 'GPSSpeed',
- 14: 'GPSTrackRef',
- 15: 'GPSTrack',
- 16: 'GPSImgDirectionRef',
- 17: 'GPSImgDirection',
- 18: 'GPSMapDatum',
- 19: 'GPSDestLatitudeRef',
- 20: 'GPSDestLatitude',
- 21: 'GPSDestLongitudeRef',
- 22: 'GPSDestLongitude',
- 23: 'GPSDestBearingRef',
- 24: 'GPSDestBearing',
- 25: 'GPSDestDistanceRef',
- 26: 'GPSDestDistance',
- 27: 'GPSProcessingMethod',
- 28: 'GPSAreaInformation',
- 29: 'GPSDateStamp',
- 30: 'GPSDifferential',
- 254: 'NewSubfileType',
- 255: 'SubfileType',
- 256: 'ImageWidth',
- 257: 'ImageLength',
- 258: 'BitsPerSample',
- 259: 'Compression',
- 262: 'PhotometricInterpretation',
- 263: 'Threshholding',
- 264: 'CellWidth',
- 265: 'CellLength',
- 266: 'FillOrder',
- 269: 'DocumentName',
- 270: 'ImageDescription',
- 271: 'Make',
- 272: 'Model',
- 273: 'StripOffsets',
- 274: 'Orientation',
- 277: 'SamplesPerPixel',
- 278: 'RowsPerStrip',
- 279: 'StripByteCounts',
- 280: 'MinSampleValue',
- 281: 'MaxSampleValue',
- 282: 'XResolution',
- 283: 'YResolution',
- 284: 'PlanarConfiguration',
- 285: 'PageName',
- 286: 'XPosition',
- 287: 'YPosition',
- 288: 'FreeOffsets',
- 289: 'FreeByteCounts',
- 290: 'GrayResponseUnit',
- 291: 'GrayResponseCurve',
- 292: 'T4Options',
- 293: 'T6Options',
- 296: 'ResolutionUnit',
- 297: 'PageNumber',
- 301: 'TransferFunction',
- 305: 'Software',
- 306: 'DateTime',
- 315: 'Artist',
- 316: 'HostComputer',
- 317: 'Predictor',
- 318: 'WhitePoint',
- 319: 'PrimaryChromaticities',
- 320: 'ColorMap',
- 321: 'HalftoneHints',
- 322: 'TileWidth',
- 323: 'TileLength',
- 324: 'TileOffsets',
- 325: 'TileByteCounts',
- 326: 'BadFaxLines',
- 327: 'CleanFaxData',
- 328: 'ConsecutiveBadFaxLines',
- 330: 'SubIFDs',
- 332: 'InkSet',
- 333: 'InkNames',
- 334: 'NumberOfInks',
- 336: 'DotRange',
- 337: 'TargetPrinter',
- 338: 'ExtraSamples',
- 339: 'SampleFormat',
- 340: 'SMinSampleValue',
- 341: 'SMaxSampleValue',
- 342: 'TransferRange',
- 343: 'ClipPath',
- 344: 'XClipPathUnits',
- 345: 'YClipPathUnits',
- 346: 'Indexed',
- 347: 'JPEGTables',
- 351: 'OPIProxy',
- 400: 'GlobalParametersIFD',
- 401: 'ProfileType',
- 402: 'FaxProfile',
- 403: 'CodingMethods',
- 404: 'VersionYear',
- 405: 'ModeNumber',
- 433: 'Decode',
- 434: 'DefaultImageColor',
- 512: 'JPEGProc',
- 513: 'JPEGInterchangeFormat',
- 514: 'JPEGInterchangeFormatLength',
- 515: 'JPEGRestartInterval',
- 517: 'JPEGLosslessPredictors',
- 518: 'JPEGPointTransforms',
- 519: 'JPEGQTables',
- 520: 'JPEGDCTables',
- 521: 'JPEGACTables',
- 529: 'YCbCrCoefficients',
- 530: 'YCbCrSubSampling',
- 531: 'YCbCrPositioning',
- 532: 'ReferenceBlackWhite',
- 559: 'StripRowCounts',
- 700: 'XMP',
- 32781: 'ImageID',
- 32932: 'WangAnnotation',
- 33432: 'Copyright',
- 33434: 'ExposureTime',
- 33437: 'FNumber',
- 33445: 'MDFileTag',
- 33446: 'MDScalePixel',
- 33447: 'MDColorTable',
- 33448: 'MDLabName',
- 33449: 'MDSampleInfo',
- 33450: 'MDPrepDate',
- 33451: 'MDPrepTime',
- 33452: 'MDFileUnits',
- 33550: 'ModelPixelScaleTag',
- 33723: 'IPTC',
- 33918: 'INGRPacketDataTag',
- 33919: 'INGRFlagRegisters',
- 33920: 'IrasBTransformationMatrix',
- 33922: 'ModelTiepointTag',
- 34264: 'ModelTransformationTag',
- 34377: 'Photoshop',
- 34665: 'ExifIFD',
- 34675: 'ICCProfile',
- 34732: 'ImageLayer',
- 34735: 'GeoKeyDirectoryTag',
- 34736: 'GeoDoubleParamsTag',
- 34737: 'GeoAsciiParamsTag',
- 34850: 'ExposureProgram',
- 34852: 'SpectralSensitivity',
- 34853: 'GPSIFD',
- 34855: 'ISOSpeedRatings',
- 34856: 'OECF',
- 34908: 'HylaFAXFaxRecvParams',
- 34909: 'HylaFAXFaxSubAddress',
- 34910: 'HylaFAXFaxRecvTime',
- 36864: 'ExifVersion',
- 36867: 'DateTimeOriginal',
- 36868: 'DateTimeDigitized',
- 37121: 'ComponentsConfiguration',
- 37122: 'CompressedBitsPerPixel',
- 37377: 'ShutterSpeedValue',
- 37378: 'ApertureValue',
- 37379: 'BrightnessValue',
- 37380: 'ExposureBiasValue',
- 37381: 'MaxApertureValue',
- 37382: 'SubjectDistance',
- 37383: 'MeteringMode',
- 37384: 'LightSource',
- 37385: 'Flash',
- 37386: 'FocalLength',
- 37396: 'SubjectArea',
- 37500: 'MakerNote',
- 37510: 'UserComment',
- 37520: 'SubsecTime',
- 37521: 'SubsecTimeOriginal',
- 37522: 'SubsecTimeDigitized',
- 37724: 'ImageSourceData',
- 40960: 'FlashpixVersion',
- 40961: 'ColorSpace',
- 40962: 'PixelXDimension',
- 40963: 'PixelYDimension',
- 40964: 'RelatedSoundFile',
- 40965: 'InteroperabilityIFD',
- 41483: 'FlashEnergy',
- 41484: 'SpatialFrequencyResponse',
- 41486: 'FocalPlaneXResolution',
- 41487: 'FocalPlaneYResolution',
- 41488: 'FocalPlaneResolutionUnit',
- 41492: 'SubjectLocation',
- 41493: 'ExposureIndex',
- 41495: 'SensingMethod',
- 41728: 'FileSource',
- 41729: 'SceneType',
- 41730: 'CFAPattern',
- 41985: 'CustomRendered',
- 41986: 'ExposureMode',
- 41987: 'WhiteBalance',
- 41988: 'DigitalZoomRatio',
- 41989: 'FocalLengthIn35mmFilm',
- 41990: 'SceneCaptureType',
- 41991: 'GainControl',
- 41992: 'Contrast',
- 41993: 'Saturation',
- 41994: 'Sharpness',
- 41995: 'DeviceSettingDescription',
- 41996: 'SubjectDistanceRange',
- 42016: 'ImageUniqueID',
- 42112: 'GDAL_METADATA',
- 42113: 'GDAL_NODATA',
- 50215: 'OceScanjobDescription',
- 50216: 'OceApplicationSelector',
- 50217: 'OceIdentificationNumber',
- 50218: 'OceImageLogicCharacteristics',
- 50706: 'DNGVersion',
- 50707: 'DNGBackwardVersion',
- 50708: 'UniqueCameraModel',
- 50709: 'LocalizedCameraModel',
- 50710: 'CFAPlaneColor',
- 50711: 'CFALayout',
- 50712: 'LinearizationTable',
- 50713: 'BlackLevelRepeatDim',
- 50714: 'BlackLevel',
- 50715: 'BlackLevelDeltaH',
- 50716: 'BlackLevelDeltaV',
- 50717: 'WhiteLevel',
- 50718: 'DefaultScale',
- 50719: 'DefaultCropOrigin',
- 50720: 'DefaultCropSize',
- 50721: 'ColorMatrix1',
- 50722: 'ColorMatrix2',
- 50723: 'CameraCalibration1',
- 50724: 'CameraCalibration2',
- 50725: 'ReductionMatrix1',
- 50726: 'ReductionMatrix2',
- 50727: 'AnalogBalance',
- 50728: 'AsShotNeutral',
- 50729: 'AsShotWhiteXY',
- 50730: 'BaselineExposure',
- 50731: 'BaselineNoise',
- 50732: 'BaselineSharpness',
- 50733: 'BayerGreenSplit',
- 50734: 'LinearResponseLimit',
- 50735: 'CameraSerialNumber',
- 50736: 'LensInfo',
- 50737: 'ChromaBlurRadius',
- 50738: 'AntiAliasStrength',
- 50740: 'DNGPrivateData',
- 50741: 'MakerNoteSafety',
- 50778: 'CalibrationIlluminant1',
- 50779: 'CalibrationIlluminant2',
- 50780: 'BestQualityScale',
- 50784: 'AliasLayerMetadata'}
+dicTagToVal = {'AliasLayerMetadata': 50784,
+ 'AnalogBalance': 50727,
+ 'AntiAliasStrength': 50738,
+ 'ApertureValue': 37378,
+ 'Artist': 315,
+ 'AsShotNeutral': 50728,
+ 'AsShotWhiteXY': 50729,
+ 'BadFaxLines': 326,
+ 'BaselineExposure': 50730,
+ 'BaselineNoise': 50731,
+ 'BaselineSharpness': 50732,
+ 'BayerGreenSplit': 50733,
+ 'BestQualityScale': 50780,
+ 'BitsPerSample': 258,
+ 'BlackLevel': 50714,
+ 'BlackLevelDeltaH': 50715,
+ 'BlackLevelDeltaV': 50716,
+ 'BlackLevelRepeatDim': 50713,
+ 'BrightnessValue': 37379,
+ 'CFALayout': 50711,
+ 'CFAPattern': 41730,
+ 'CFAPlaneColor': 50710,
+ 'CalibrationIlluminant1': 50778,
+ 'CalibrationIlluminant2': 50779,
+ 'CameraCalibration1': 50723,
+ 'CameraCalibration2': 50724,
+ 'CameraSerialNumber': 50735,
+ 'CellLength': 265,
+ 'CellWidth': 264,
+ 'ChromaBlurRadius': 50737,
+ 'CleanFaxData': 327,
+ 'ClipPath': 343,
+ 'CodingMethods': 403,
+ 'ColorMap': 320,
+ 'ColorMatrix1': 50721,
+ 'ColorMatrix2': 50722,
+ 'ColorSpace': 40961,
+ 'ComponentsConfiguration': 37121,
+ 'CompressedBitsPerPixel': 37122,
+ 'Compression': 259,
+ 'ConsecutiveBadFaxLines': 328,
+ 'Contrast': 41992,
+ 'Copyright': 33432,
+ 'CustomRendered': 41985,
+ 'DNGBackwardVersion': 50707,
+ 'DNGPrivateData': 50740,
+ 'DNGVersion': 50706,
+ 'DateTime': 306,
+ 'DateTimeDigitized': 36868,
+ 'DateTimeOriginal': 36867,
+ 'Decode': 433,
+ 'DefaultCropOrigin': 50719,
+ 'DefaultCropSize': 50720,
+ 'DefaultImageColor': 434,
+ 'DefaultScale': 50718,
+ 'DeviceSettingDescription': 41995,
+ 'DigitalZoomRatio': 41988,
+ 'DocumentName': 269,
+ 'DotRange': 336,
+ 'ExifIFD': 34665,
+ 'ExifVersion': 36864,
+ 'ExposureBiasValue': 37380,
+ 'ExposureIndex': 41493,
+ 'ExposureMode': 41986,
+ 'ExposureProgram': 34850,
+ 'ExposureTime': 33434,
+ 'ExtraSamples': 338,
+ 'FNumber': 33437,
+ 'FaxProfile': 402,
+ 'FileSource': 41728,
+ 'FillOrder': 266,
+ 'Flash': 37385,
+ 'FlashEnergy': 41483,
+ 'FlashpixVersion': 40960,
+ 'FocalLength': 37386,
+ 'FocalLengthIn35mmFilm': 41989,
+ 'FocalPlaneResolutionUnit': 41488,
+ 'FocalPlaneXResolution': 41486,
+ 'FocalPlaneYResolution': 41487,
+ 'FreeByteCounts': 289,
+ 'FreeOffsets': 288,
+ 'GPSAltitude': 6,
+ 'GPSAltitudeRef': 5,
+ 'GPSAreaInformation': 28,
+ 'GPSDOP': 11,
+ 'GPSDateStamp': 29,
+ 'GPSDestBearing': 24,
+ 'GPSDestBearingRef': 23,
+ 'GPSDestDistance': 26,
+ 'GPSDestDistanceRef': 25,
+ 'GPSDestLatitude': 20,
+ 'GPSDestLatitudeRef': 19,
+ 'GPSDestLongitude': 22,
+ 'GPSDestLongitudeRef': 21,
+ 'GPSDifferential': 30,
+ 'GPSIFD': 34853,
+ 'GPSImgDirection': 17,
+ 'GPSImgDirectionRef': 16,
+ 'GPSLatitude': 2,
+ 'GPSLatitudeRef': 1,
+ 'GPSLongitude': 4,
+ 'GPSLongitudeRef': 3,
+ 'GPSMapDatum': 18,
+ 'GPSMeasureMode': 10,
+ 'GPSProcessingMethod': 27,
+ 'GPSSatellites': 8,
+ 'GPSSpeed': 13,
+ 'GPSSpeedRef': 12,
+ 'GPSStatus': 9,
+ 'GPSTimeStamp': 7,
+ 'GPSTrack': 15,
+ 'GPSTrackRef': 14,
+ 'GPSVersionID': 0,
+ 'GainControl': 41991,
+ 'GeoAsciiParamsTag': 34737,
+ 'GeoDoubleParamsTag': 34736,
+ 'GeoKeyDirectoryTag': 34735,
+ 'GlobalParametersIFD': 400,
+ 'GrayResponseCurve': 291,
+ 'GrayResponseUnit': 290,
+ 'HalftoneHints': 321,
+ 'HostComputer': 316,
+ 'HylaFAXFaxRecvParams': 34908,
+ 'HylaFAXFaxRecvTime': 34910,
+ 'HylaFAXFaxSubAddress': 34909,
+ 'ICCProfile': 34675,
+ 'INGRFlagRegisters': 33919,
+ 'INGRPacketDataTag': 33918,
+ 'IPTC': 33723,
+ 'ISOSpeedRatings': 34855,
+ 'ImageDescription': 270,
+ 'ImageID': 32781,
+ 'ImageLayer': 34732,
+ 'ImageLength': 257,
+ 'ImageSourceData': 37724,
+ 'ImageUniqueID': 42016,
+ 'ImageWidth': 256,
+ 'Indexed': 346,
+ 'InkNames': 333,
+ 'InkSet': 332,
+ 'InteroperabilityIFD': 40965,
+ 'InteroperabilityIndex': 1,
+ 'IrasBTransformationMatrix': 33920,
+ 'JPEGACTables': 521,
+ 'JPEGDCTables': 520,
+ 'JPEGInterchangeFormat': 513,
+ 'JPEGInterchangeFormatLength': 514,
+ 'JPEGLosslessPredictors': 517,
+ 'JPEGPointTransforms': 518,
+ 'JPEGProc': 512,
+ 'JPEGQTables': 519,
+ 'JPEGRestartInterval': 515,
+ 'JPEGTables': 347,
+ 'LensInfo': 50736,
+ 'LightSource': 37384,
+ 'LinearResponseLimit': 50734,
+ 'LinearizationTable': 50712,
+ 'LocalizedCameraModel': 50709,
+ 'MDColorTable': 33447,
+ 'MDFileTag': 33445,
+ 'MDFileUnits': 33452,
+ 'MDLabName': 33448,
+ 'MDPrepDate': 33450,
+ 'MDPrepTime': 33451,
+ 'MDSampleInfo': 33449,
+ 'MDScalePixel': 33446,
+ 'METADATA': 42112,
+ 'Make': 271,
+ 'MakerNote': 37500,
+ 'MakerNoteSafety': 50741,
+ 'MaxApertureValue': 37381,
+ 'MaxSampleValue': 281,
+ 'MeteringMode': 37383,
+ 'MinSampleValue': 280,
+ 'ModeNumber': 405,
+ 'Model': 272,
+ 'ModelPixelScaleTag': 33550,
+ 'ModelTiepointTag': 33922,
+ 'ModelTransformationTag': 34264,
+ 'NODATA': 42113,
+ 'NewSubfileType': 254,
+ 'NumberOfInks': 334,
+ 'OECF': 34856,
+ 'OPIProxy': 351,
+ 'OceApplicationSelector': 50216,
+ 'OceIdentificationNumber': 50217,
+ 'OceImageLogicCharacteristics': 50218,
+ 'OceScanjobDescription': 50215,
+ 'Orientation': 274,
+ 'PageName': 285,
+ 'PageNumber': 297,
+ 'PhotometricInterpretation': 262,
+ 'Photoshop': 34377,
+ 'PixelXDimension': 40962,
+ 'PixelYDimension': 40963,
+ 'PlanarConfiguration': 284,
+ 'Predictor': 317,
+ 'PrimaryChromaticities': 319,
+ 'ProfileType': 401,
+ 'ReductionMatrix1': 50725,
+ 'ReductionMatrix2': 50726,
+ 'ReferenceBlackWhite': 532,
+ 'RelatedSoundFile': 40964,
+ 'ResolutionUnit': 296,
+ 'RowsPerStrip': 278,
+ 'SMaxSampleValue': 341,
+ 'SMinSampleValue': 340,
+ 'SampleFormat': 339,
+ 'SamplesPerPixel': 277,
+ 'Saturation': 41993,
+ 'SceneCaptureType': 41990,
+ 'SceneType': 41729,
+ 'SensingMethod': 41495,
+ 'Sharpness': 41994,
+ 'ShutterSpeedValue': 37377,
+ 'Software': 305,
+ 'SpatialFrequencyResponse': 41484,
+ 'SpectralSensitivity': 34852,
+ 'StripByteCounts': 279,
+ 'StripOffsets': 273,
+ 'StripRowCounts': 559,
+ 'SubIFDs': 330,
+ 'SubfileType': 255,
+ 'SubjectArea': 37396,
+ 'SubjectDistance': 37382,
+ 'SubjectDistanceRange': 41996,
+ 'SubjectLocation': 41492,
+ 'SubsecTime': 37520,
+ 'SubsecTimeDigitized': 37522,
+ 'SubsecTimeOriginal': 37521,
+ 'T4Options': 292,
+ 'T6Options': 293,
+ 'TargetPrinter': 337,
+ 'Threshholding': 263,
+ 'TileByteCounts': 325,
+ 'TileLength': 323,
+ 'TileOffsets': 324,
+ 'TileWidth': 322,
+ 'TransferFunction': 301,
+ 'TransferRange': 342,
+ 'UniqueCameraModel': 50708,
+ 'UserComment': 37510,
+ 'VersionYear': 404,
+ 'WangAnnotation': 32932,
+ 'WhiteBalance': 41987,
+ 'WhiteLevel': 50717,
+ 'WhitePoint': 318,
+ 'XClipPathUnits': 344,
+ 'XMP': 700,
+ 'XPosition': 286,
+ 'XResolution': 282,
+ 'YCbCrCoefficients': 529,
+ 'YCbCrPositioning': 531,
+ 'YCbCrSubSampling': 530,
+ 'YClipPathUnits': 345,
+ 'YPosition': 287,
+ 'YResolution': 283}
 # ===========================================================
 lstMsgTags = []
 def log(msg, tag=None, op=None):
@@ -615,6 +616,14 @@ def log(msg, tag=None, op=None):
     print strTag + " " + msg
     if op == 'remove' and tag in lstMsgTags:
         lstMsgTags.remove(tag)
+
+def getTagStringByValue(value):
+    # TODO : Use a pre-calculated map to reduce time & fix the multiple value issue
+    strTag = ""
+    for k, v in dicTagToVal.iteritems():
+        if v == value:
+            return k
+    assert strTag != ""
 
 class IFDEntry:
     def __init__(self, tag, bytesPerComp):
@@ -748,7 +757,8 @@ class JPEGMetadataParser:
             data = array('d', lstValue)
             pass
         entry.setData(data)
-        log(" --- tag(%s), %s"%(hex(tag), str(data)))
+
+        log(" --- tag(%s), %s"%(getTagStringByValue(tag), str(data)))
         return entry
 
     def __parseBasicIFD(self, base, start, end):
@@ -783,14 +793,15 @@ class JPEGMetadataParser:
 
             entry = self.__getDataFromFormat(tag, dataFormat, dataSize)
             if entry.getTag() == TAGID_ExifIFD:
-                subExifOffset = entry.getValue()
-                self._file.seek(base+subExifOffset)
-                self.__parseExifSubIFD(base, start, end)
+                ifdOffset = entry.getValue()
+                self._file.seek(base+ifdOffset)
+                self.__parseIFDs(base, start, end, "ExifIFD")
             elif entry.getTag() == TAGID_SubIFDs:
                 log("SubIFDs")
-                pass
             elif entry.getTag() == TAGID_GPSIFD:
-                log("GPSIFD")
+                ifdOffset = entry.getValue()
+                self._file.seek(base+ifdOffset)
+                self.__parseIFDs(base, start, end, IFD="GPSIFD")
                 pass
             elif entry.getTag() == TAGID_IPTC:
                 log("IPTC")
@@ -808,12 +819,14 @@ class JPEGMetadataParser:
                 log("DNGPrivateData")
                 pass
 
+
             self._file.seek(posAfterDataOffset)
 
         log("Leave", "[BasicIFD]", "remove")
 
-    def __parseExifSubIFD(self, base, start, end):
-        log("Enter", "[SubIFDs]", "add")
+    def __parseIFDs(self, base, start, end, IFD=""):
+        assert IFD != ""
+        log("Enter", "[%s]"%(IFD), "add")
 
         if not self._file:
             assert False
@@ -844,7 +857,7 @@ class JPEGMetadataParser:
             entry = self.__getDataFromFormat(tag, dataFormat, dataSize)
             self._file.seek(posAfterDataOffset)
 
-        log("Leave", "[SubIFDs]", "remove")
+        log("Leave", "[%s]"%(IFD), "remove")
 
     def __parseAPP1(self, base, start, end):
         if not self._file:
@@ -973,7 +986,6 @@ class JPEGMetadataParser:
                 if typeDesc == "curv":
                     reserved = self.__getLen4()
                     assert reserved == 0
-                    assert size == 14
                     count = self.__getLen4()
                     log(" count = %d"%(count))
                     if count == 0:
@@ -1086,9 +1098,9 @@ class JPEGMetadataParser:
 import os
 #fPath = "./images/Sample.JPG"
 #fPath = "./images/brownie.jpg"
-fPath = "./images/tampa_AdobeRGB.jpg"
+#fPath = "./images/tampa_AdobeRGB.jpg"
 #fPath = "./images/exif-iptc.jpg"
-#fPath = "./images/Reagan.jpg"
+fPath = "./images/Reagan.jpg"
 
 fullPath = os.path.abspath(fPath)
 
