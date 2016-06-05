@@ -43,7 +43,22 @@ class XMPParser(object):
         pass
 
     @staticmethod
-    def parse(data):
+    def parse(inputData):
+
+        s1 = inputData.find('<x:xmpmeta')
+        s2 = inputData.find('/x:xmpmeta>')
+        s3 = inputData.find('<x:xapmeta')
+        s4 = inputData.find('/x:xapmeta>')
+        #print "XMP index <x:xmpmeta=%d, /x:xmpmeta>=%d ==> <x:xapmeta=%d, /x:xapmeta>=%d"%(s1, s2, s3, s4)
+        assert not (s1 == s2 and s3 == s4), "New kind of XMP meta in this file !!"
+        data = None
+        if s1 != s2 and s3 == s4:
+            data = inputData[s1:s2+11]
+        elif s3 != s4 and s1 == s2:
+            data = inputData[s3:s4+11]
+        else:
+            assert False, "Containing multiple meta tags, correct the code !"
+
         meta = {}
         xmlTree = ET.XML(data)
         rdfTree = xmlTree.find('{' + NS_RDF + '}' + 'RDF')

@@ -887,13 +887,8 @@ class JPEGMetadataParser:
         if not self._file:
             assert False
 
-        s1 = data.find('<?')
-        s2 = data.find('?>')
-        s3 = data.find('<?', s2)
-        s4 = data.find('?>', s3)
-        dataCut = data[s2+2:s3]
         from XMPParser import XMPParser
-        meta = XMPParser.parse(dataCut)
+        meta = XMPParser.parse(data)
         log('XMP = %s'%(str(meta)))
 
     def __parseAPP2(self, length):
@@ -1098,9 +1093,10 @@ class JPEGMetadataParser:
 import os
 #fPath = "./images/Sample.JPG"
 #fPath = "./images/brownie.jpg"
-#fPath = "./images/tampa_AdobeRGB.jpg"
+fPath = "./images/tampa_AdobeRGB.jpg"
 #fPath = "./images/exif-iptc.jpg"
-fPath = "./images/Reagan.jpg"
+#fPath = "./images/Reagan.jpg"
+#fPath = "./images/gps.jpg"
 
 fullPath = os.path.abspath(fPath)
 
