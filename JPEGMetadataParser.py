@@ -1090,15 +1090,13 @@ class JPEGMetadataParser:
                 pass # TBD
             self._file.seek(curPos+length-2)
 
-import os
-#fPath = "./images/Sample.JPG"
-#fPath = "./images/brownie.jpg"
-fPath = "./images/tampa_AdobeRGB.jpg"
-#fPath = "./images/exif-iptc.jpg"
-#fPath = "./images/Reagan.jpg"
-#fPath = "./images/gps.jpg"
-
-fullPath = os.path.abspath(fPath)
-
-jpgParser = JPEGMetadataParser()
-jpgParser.parse(fullPath)
+import argparse
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--input', help='Input jpeg file to be parsed')
+    args = parser.parse_args()
+    if (args.input != None):
+        jpgParser = JPEGMetadataParser()
+        jpgParser.parse(args.input)
+    else:
+        print "Nothing to be parsed, make sure there's an input file !! "
