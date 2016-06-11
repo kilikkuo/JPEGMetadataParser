@@ -13,9 +13,6 @@
 # http://www.cipa.jp/std/documents/e/DC-008-2012_E.pdf
 # ===
 
-BYTE_ALIGN_INTEL    = 0x4949
-BYTE_ALIGN_MOTOROLA = 0x4d4d
-
 # Start Of Frame N
 # N indicates the compression process, only SOF0~SOF2 are commonly used.
 # Nondifferential Huffman-coding frames
@@ -641,62 +638,15 @@ class IFDEntry:
         assert not (len(self.__value) != 1), "Contains not exact 1 element !"
         return self.__value[0]
 
+from FileOPs import nowAt, seekTo, getChar, getCharToOrd, getBytes2, getBytes4,\
+                    getBytes8, BYTE_ALIGN_INTEL, BYTE_ALIGN_MOTOROLA
+
 EXIF_TIFF_DATAFORMAT_LIST = [1,1,1,2,4,8,1,1,2,4,8,4,8]
 class JPEGMetadataParser:
     def __init__(self):
         self._file = None
         self._orderAPP1 = None
         pass
-
-    def __getChar(self):
-        if not self._file:
-            assert False
-        return self._file.read(1)
-
-    def __getcToOrd(self):
-        if not self._file:
-            assert False
-        c = self._file.read(1)
-        if c == '':
-            return -1
-        return ord(c)
-
-    def __getLen2(self, order=BYTE_ALIGN_MOTOROLA):
-        # 0x4d4d for MM / 0x4949 for II.
-        L = self.__getcToOrd()
-        H = self.__getcToOrd()
-        if order == BYTE_ALIGN_MOTOROLA:
-            return L << 8 | H
-        else:
-            return L | H << 8
-
-    def __getLen4(self, order=BYTE_ALIGN_MOTOROLA):
-        # 0x4d4d for MM / 0x4949 for II.
-        LL = self.__getcToOrd()
-        LH = self.__getcToOrd()
-        HL = self.__getcToOrd()
-        HH = self.__getcToOrd()
-        if order == BYTE_ALIGN_MOTOROLA:
-            return LL << 24 | LH << 16 | HL << 8 | HH
-        else:
-            return LL | LH << 8 | HL << 16 | HH << 24
-
-    def __getLen8(self, order=BYTE_ALIGN_MOTOROLA):
-        # 0x4d4d for MM / 0x4949 for II.
-        LLL = self.__getcToOrd()
-        LLH = self.__getcToOrd()
-        LHL = self.__getcToOrd()
-        LHH = self.__getcToOrd()
-        HLL = self.__getcToOrd()
-        HLH = self.__getcToOrd()
-        HHL = self.__getcToOrd()
-        HHH = self.__getcToOrd()
-        if order == BYTE_ALIGN_MOTOROLA:
-            return LLL << 56 | LLH << 48 | LHL << 40 | LHH << 32 |\
-                    HLL << 24 | HLH << 16 | HHL << 8 | HHH
-        else:
-            return LLL | LLH << 8 | LHL << 16 | LHH << 24 |\
-                    HLL << 32 | HLH << 40 | HHL << 48 | HHH << 56
 
     def __getDataFromFormat(self, tag, format, size):
         from array import array
@@ -706,16 +656,16 @@ class JPEGMetadataParser:
         lstValue = []
         if format in [1, 6, 7]:
             # unsigned byte / # signed byte / # undefined
-            data = array('b', self._file.read(size))
+            data = array('b', getChar(self._file, size))
             pass
         elif format == 2:
             # ascii string
-            data = array('c', self._file.read(size))
+            data = array('c', getChar(self._file, size))
             pass
         elif format in [3, 8]:
             # unsigned short / # signed short
             while size > 0:
-                v = self.__getLen2(self._orderAPP1)
+                v = getBytes2(self._file, self._orderAPP1)
                 lstValue.append(v)
                 size -= 2
             encode = 'H' if format == 3 else 'h'
@@ -724,7 +674,7 @@ class JPEGMetadataParser:
         elif format in [4, 9]:
             # unsigned long / # signed long
             while size > 0:
-                v = self.__getLen4(self._orderAPP1)
+                v = getBytes4(self._file, self._orderAPP1)
                 lstValue.append(v)
                 size -= 4
             encode = 'L' if format == 4 else 'l'
@@ -733,8 +683,8 @@ class JPEGMetadataParser:
         elif format in [5, 10]:
             # unsigned rational / # signed rational
             while size > 0:
-                numerator = self.__getLen4(self._orderAPP1)
-                denominator = self.__getLen4(self._orderAPP1)
+                numerator = getBytes4(self._file, self._orderAPP1)
+                denominator = getBytes4(self._file, self._orderAPP1)
                 size -= 8
                 lstValue.append(float(numerator) / float(denominator))
             data = array('d', lstValue)
@@ -742,7 +692,7 @@ class JPEGMetadataParser:
         elif format == 11:
             # signed float
             while size > 0:
-                v = self.__getLen4(self._orderAPP1)
+                v = getBytes4(self._file, self._orderAPP1)
                 lstValue.append(v)
                 size -= 4
             data = array('f', lstValue)
@@ -750,8 +700,8 @@ class JPEGMetadataParser:
         elif format == 12:
             # double float
             while size > 0:
-                numerator = self.__getLen4(self._orderAPP1)
-                denominator = self.__getLen4(self._orderAPP1)
+                numerator = getBytes4(self._file, self._orderAPP1)
+                denominator = getBytes4(self._file, self._orderAPP1)
                 size -= 8
                 lstValue.append(float(numerator) / float(denominator))
             data = array('d', lstValue)
@@ -766,16 +716,16 @@ class JPEGMetadataParser:
 
         if not self._file:
             assert False
-        entries = self.__getLen2(self._orderAPP1)
+        entries = getBytes2(self._file, self._orderAPP1)
         log("Number of entries = %d"%(entries))
 
         for idx in xrange(entries):
-            tag = self.__getLen2(self._orderAPP1)
-            dataFormat = self.__getLen2(self._orderAPP1)
-            numOfComps = self.__getLen4(self._orderAPP1)
-            posBeforeDataOffset = self._file.tell()
-            dataOffset = self.__getLen4(self._orderAPP1)
-            posAfterDataOffset = self._file.tell()
+            tag = getBytes2(self._file, self._orderAPP1)
+            dataFormat = getBytes2(self._file, self._orderAPP1)
+            numOfComps = getBytes4(self._file, self._orderAPP1)
+            posBeforeDataOffset = nowAt(self._file)
+            dataOffset = getBytes4(self._file, self._orderAPP1)
+            posAfterDataOffset = nowAt(self._file)
 
             if 0 == dataFormat or dataFormat >= len(EXIF_TIFF_DATAFORMAT_LIST):
                 assert False, "dataformat incorrect = %d"%(dataFormat)
@@ -787,20 +737,20 @@ class JPEGMetadataParser:
                 if targetOffset <= start or targetOffset >= end:
                     continue
                 else:
-                    self._file.seek(targetOffset)
+                    seekTo(self._file, targetOffset)
             else:
-                self._file.seek(posBeforeDataOffset)
+                seekTo(self._file, posBeforeDataOffset)
 
             entry = self.__getDataFromFormat(tag, dataFormat, dataSize)
             if entry.getTag() == TAGID_ExifIFD:
                 ifdOffset = entry.getValue()
-                self._file.seek(base+ifdOffset)
+                seekTo(self._file, base+ifdOffset)
                 self.__parseIFDs(base, start, end, "ExifIFD")
             elif entry.getTag() == TAGID_SubIFDs:
                 log("SubIFDs")
             elif entry.getTag() == TAGID_GPSIFD:
                 ifdOffset = entry.getValue()
-                self._file.seek(base+ifdOffset)
+                seekTo(self._file, base+ifdOffset)
                 self.__parseIFDs(base, start, end, IFD="GPSIFD")
                 pass
             elif entry.getTag() == TAGID_IPTC:
@@ -820,7 +770,7 @@ class JPEGMetadataParser:
                 pass
 
 
-            self._file.seek(posAfterDataOffset)
+            seekTo(self._file, posAfterDataOffset)
 
         log("Leave", "[BasicIFD]", "remove")
 
@@ -830,16 +780,16 @@ class JPEGMetadataParser:
 
         if not self._file:
             assert False
-        entries = self.__getLen2(self._orderAPP1)
+        entries = getBytes2(self._file, self._orderAPP1)
         log("Number of entries = %d"%(entries))
 
         for idx in xrange(entries):
-            tag = self.__getLen2(self._orderAPP1)
-            dataFormat = self.__getLen2(self._orderAPP1)
-            numOfComps = self.__getLen4(self._orderAPP1)
-            posBeforeDataOffset = self._file.tell()
-            dataOffset = self.__getLen4(self._orderAPP1)
-            posAfterDataOffset = self._file.tell()
+            tag = getBytes2(self._file, self._orderAPP1)
+            dataFormat = getBytes2(self._file, self._orderAPP1)
+            numOfComps = getBytes4(self._file, self._orderAPP1)
+            posBeforeDataOffset = nowAt(self._file)
+            dataOffset = getBytes4(self._file, self._orderAPP1)
+            posAfterDataOffset = nowAt(self._file)
 
             if 0 == dataFormat or dataFormat >= len(EXIF_TIFF_DATAFORMAT_LIST):
                 assert False, "dataformat incorrect = %d"%(dataFormat)
@@ -851,11 +801,11 @@ class JPEGMetadataParser:
                 if targetOffset <= start or targetOffset >= end:
                     continue
                 else:
-                    self._file.seek(targetOffset)
+                    seekTo(self._file, targetOffset)
             else:
-                self._file.seek(posBeforeDataOffset)
+                seekTo(self._file, posBeforeDataOffset)
             entry = self.__getDataFromFormat(tag, dataFormat, dataSize)
-            self._file.seek(posAfterDataOffset)
+            seekTo(self._file, posAfterDataOffset)
 
         log("Leave", "[%s]"%(IFD), "remove")
 
@@ -863,24 +813,24 @@ class JPEGMetadataParser:
         if not self._file:
             assert False
 
-        self._file.seek(base)
-        self._orderAPP1 = self.__getLen2()
+        seekTo(self._file, base)
+        self._orderAPP1 = getBytes2(self._file)
         log("order = %s"%(hex(self._orderAPP1)))
 
         if self._orderAPP1 not in [BYTE_ALIGN_MOTOROLA, BYTE_ALIGN_INTEL]:
             log("order incorrect")
             assert False
 
-        check = self.__getLen2(self._orderAPP1)
+        check = getBytes2(self._file, self._orderAPP1)
         if check != 0x002a:
             assert False
 
-        offsetToNextIFD = self.__getLen4(self._orderAPP1)
+        offsetToNextIFD = getBytes4(self._file, self._orderAPP1)
         log("offsetToNextIFD = %s"%(hex(offsetToNextIFD)))
         while offsetToNextIFD:
-            self._file.seek(base+offsetToNextIFD)
+            seekTo(self._file, base+offsetToNextIFD)
             self.__parseBasicIFD(base, start, end)
-            offsetToNextIFD = self.__getLen4(self._orderAPP1)
+            offsetToNextIFD = getBytes4(self._file, self._orderAPP1)
             log("offsetToNextIFD = %s"%(hex(offsetToNextIFD)))
 
     def __parseXMP(self, data, dataLen):
@@ -892,8 +842,8 @@ class JPEGMetadataParser:
         log('XMP = %s'%(str(meta)))
 
     def __parseAPP2(self, length):
-        curPos = self._file.tell()
-        iptcData = self._file.read(length)
+        curPos = nowAt(self._file)
+        iptcData = getChar(self._file, length)
         iccIdentifier = "ICC_PROFILE"
         if (iptcData.startswith(iccIdentifier)):
             iccData = iptcData[len(iccIdentifier)+1:]
@@ -905,7 +855,7 @@ class JPEGMetadataParser:
             else:
                 log("Wrong ICC Profile format !")
                 return
-            self._file.seek(curPos+14)
+            seekTo(self._file, curPos+14)
             self.__parseICCProfile(iccData[2:], iccLen)
         else:
             log("Wrong ICC Profile format !")
@@ -913,42 +863,42 @@ class JPEGMetadataParser:
 
     def __parseICCProfile(self, iccData, iccLen):
         # Refer to http://blog.fpmurphy.com/2012/03/extract-icc-profile-from-images.html
-        basePos = self._file.tell()
+        basePos = nowAt(self._file)
         def parseHeader():
             log("Enter", "[ICCProfileHeader]", "add")
-            profileSize = self.__getLen4()
-            cmmType = ''.join(self.__getChar() for _ in xrange(4))
-            lstVersion = [self.__getcToOrd() for _ in xrange(4)]
+            profileSize = getBytes4(self._file)
+            cmmType = ''.join(getChar(self._file) for _ in xrange(4))
+            lstVersion = [getCharToOrd(self._file) for _ in xrange(4)]
             log("ICCProfile version = %s"%str(lstVersion))
 
-            deviceClass = ''.join(self.__getChar() for _ in xrange(4))
+            deviceClass = ''.join(getChar(self._file) for _ in xrange(4))
             log("Profile Size = %d, %s, %s"%(profileSize, cmmType, deviceClass))
 
-            colorSpaceOfData = ''.join(self.__getChar() for _ in xrange(4))
-            pcs = ''.join(self.__getChar() for _ in xrange(4))
+            colorSpaceOfData = ''.join(getChar(self._file) for _ in xrange(4))
+            pcs = ''.join(getChar(self._file) for _ in xrange(4))
             log("CS Data, pcs = %s, %s"%(colorSpaceOfData, pcs))
 
-            lstDatetime = [self.__getLen2() for _ in xrange(6)]
+            lstDatetime = [getBytes2(self._file) for _ in xrange(6)]
             log("Datatime = Y(%d)M(%d)D(%d)H(%d)M(%d)S(%d)"%tuple(lstDatetime))
 
-            signature = ''.join(self.__getChar() for _ in xrange(4))
-            primaryPlatform = ''.join(self.__getChar() for _ in xrange(4))
+            signature = ''.join(getChar(self._file) for _ in xrange(4))
+            primaryPlatform = ''.join(getChar(self._file) for _ in xrange(4))
             log("signature, primaryPlatform = %s, %s"%(signature, primaryPlatform))
 
-            lstProfileFlags = [hex(self.__getcToOrd()) for _ in xrange(4)]
+            lstProfileFlags = [hex(getCharToOrd(self._file)) for _ in xrange(4)]
             log("Profile Flags = %s"%str(lstProfileFlags))
 
-            deviceManufacturer = ''.join(self.__getChar() for _ in xrange(4))
-            deviceModel = ''.join(self.__getChar() for _ in xrange(4))
+            deviceManufacturer = ''.join(getChar(self._file) for _ in xrange(4))
+            deviceModel = ''.join(getChar(self._file) for _ in xrange(4))
             log("deviceManufacturer, deviceModel = %s, %s"%(deviceManufacturer, deviceModel))
 
-            lstDeviceAttributes = [hex(self.__getcToOrd()) for _ in xrange(8)]
+            lstDeviceAttributes = [hex(getCharToOrd(self._file)) for _ in xrange(8)]
             log("Device Attributes = %s"%str(lstDeviceAttributes))
 
-            renderingIntent, zeroPadding = self.__getLen2(), self.__getLen2()
+            renderingIntent, zeroPadding = getBytes2(self._file), getBytes2(self._file)
             log("Rendering Intent = %d"%(renderingIntent))
 
-            intX, intY, intZ = self.__getLen4(), self.__getLen4(), self.__getLen4()
+            intX, intY, intZ = getBytes4(self._file), getBytes4(self._file), getBytes4(self._file)
             import struct
             X = struct.unpack('f', struct.pack('i', intX))
             Y = struct.unpack('f', struct.pack('i', intY))
@@ -958,42 +908,42 @@ class JPEGMetadataParser:
             CIEXYZ_Z = Z[0] / Y[0]
             log("CIEXYZ = (%f, %f, %f)"%(CIEXYZ_X, CIEXYZ_Y, CIEXYZ_Z))
 
-            profileCreator = ''.join(self.__getChar() for _ in xrange(4))
+            profileCreator = ''.join(getChar(self._file) for _ in xrange(4))
             log("Profile Creator = %s"%(profileCreator))
-            profileID = [hex(self.__getcToOrd()) for _ in xrange(16)]
+            profileID = [hex(getCharToOrd(self._file)) for _ in xrange(16)]
             log("Profile ID = %s"%(str(profileID)))
-            reserved = [hex(self.__getcToOrd()) for _ in xrange(28)]
+            reserved = [hex(getCharToOrd(self._file)) for _ in xrange(28)]
             log("Reserved = %s"%(str(reserved)))
             log("Leave", "[ICCProfileHeader]", "remove")
 
         def parseTagTable():
             log("Enter", "[ICCProfileTagTable]", "add")
-            tagCount = self.__getLen4()
+            tagCount = getBytes4(self._file)
             log("Tag count = %d"%(tagCount))
             for idx in xrange(tagCount):
-                tagStartPos = self._file.tell()
-                sig = ''.join(self.__getChar() for _ in xrange(4))
-                offset = self.__getLen4()
-                size = self.__getLen4()
+                tagStartPos = nowAt(self._file)
+                sig = ''.join(getChar(self._file) for _ in xrange(4))
+                offset = getBytes4(self._file)
+                size = getBytes4(self._file)
                 log("Tag sig(%s) / offset(%d) / size(%d)"%(sig, offset, size))
-                self._file.seek(basePos+offset)
-                typeDesc = ''.join(self.__getChar() for _ in xrange(4))
+                seekTo(self._file, basePos+offset)
+                typeDesc = ''.join(getChar(self._file) for _ in xrange(4))
                 if typeDesc == "curv":
-                    reserved = self.__getLen4()
+                    reserved = getBytes4(self._file)
                     assert reserved == 0
-                    count = self.__getLen4()
+                    count = getBytes4(self._file)
                     log(" count = %d"%(count))
                     if count == 0:
                         exp = 1.0
                     else:
-                        first, second = self.__getcToOrd(), self.__getcToOrd()
+                        first, second = getCharToOrd(self._file), getCharToOrd(self._file)
                         exp = first + float(second/256.0)
                     log(" exp = %f"%(exp))
                 elif typeDesc == "XYZ ":
-                    reserved = self.__getLen4()
+                    reserved = getBytes4(self._file)
                     assert reserved == 0
                     assert size == 20
-                    intX, intY, intZ = self.__getLen4(), self.__getLen4(), self.__getLen4()
+                    intX, intY, intZ = getBytes4(self._file), getBytes4(self._file), getBytes4(self._file)
                     if intX != 0 and intY != 0 and intZ != 0:
                         import struct
                         X = struct.unpack('f', struct.pack('i', intX))
@@ -1006,33 +956,33 @@ class JPEGMetadataParser:
                     else:
                         log("CIEXYZ = (%f, %f, %f)"%(0, 0, 0))
                 elif typeDesc == "text":
-                    text = ''.join(self.__getChar() for _ in xrange(size-4))
+                    text = ''.join(getChar(self._file) for _ in xrange(size-4))
                     log(" txt = %s"%(text))
                 elif typeDesc == "desc":
-                    reserved = self.__getLen4()
+                    reserved = getBytes4(self._file)
                     assert reserved == 0
-                    asciiCount = self.__getLen4()
+                    asciiCount = getBytes4(self._file)
                     log(" asciiCount = %d"%(asciiCount))
-                    asciiInvariantDesc = self._file.read(asciiCount)
+                    asciiInvariantDesc = getChar(self._file, asciiCount)
                     log(" asciiInvariantDesc = %s"%(asciiInvariantDesc))
-                    uniLangCode = self.__getLen4()
-                    uniCount = self.__getLen4()
+                    uniLangCode = getBytes4(self._file)
+                    uniCount = getBytes4(self._file)
                     log(" uniLangCode, uniCount = %d, %d"%(uniLangCode, uniCount))
                     if uniLangCode != 0 and uniCount != 0:
-                        uniLocalizableDesc = self._file.read(uniCount)
+                        uniLocalizableDesc = getChar(self._file, uniCount)
                         log(" uniLocalizableDesc = %s"%(uniLocalizableDesc))
-                    scriptCode = self.__getLen2()
-                    scriptCount = self.__getcToOrd()
+                    scriptCode = getBytes2(self._file)
+                    scriptCount = getCharToOrd(self._file)
                     log(" scriptCode, scriptCount = %d, %d"%(scriptCode, scriptCount))
                     if scriptCode != 0 and scriptCount != 0:
-                        localMacintoshDesc = self._file.read(scriptCount)
+                        localMacintoshDesc = getChar(self._file, scriptCount)
                         log(" localMacintoshDesc = %s"%(localMacintoshDesc))
                     pass
-                self._file.seek(tagStartPos+12)
+                seekTo(self._file, tagStartPos+12)
 
             log("Leave", "[ICCProfileTagTable]", "remove")
             pass
-            #tagCount = self.__getLen4()
+            #tagCount = getBytes4(self._file)
             #print "Tag count = %d"%(tagCount)
 
         parseHeader()
@@ -1040,20 +990,20 @@ class JPEGMetadataParser:
 
     def parse(self, filePath):
         self._file = open(filePath)
-        self._file.seek(0)
-        first = self.__getcToOrd()
-        marker = self.__getcToOrd()
+        seekTo(self._file, 0)
+        first = getCharToOrd(self._file)
+        marker = getCharToOrd(self._file)
         if (first != 0xff or marker != JPEG_SOI):
             assert False, "Not in JPEG format !!"
 
         while (marker):
-            first = self.__getcToOrd()
+            first = getCharToOrd(self._file)
             if first != 0xff or first < 0:
                 break
-            marker = self.__getcToOrd()
+            marker = getCharToOrd(self._file)
             log("%s-%s"%(hex(first), hex(marker)))
-            length = self.__getLen2()
-            curPos = self._file.tell()
+            length = getBytes2(self._file)
+            curPos = nowAt(self._file)
             log("length= %d, curPos=%d"%(length,curPos))
 
             if marker in [JPEG_EOI, JPEG_SOS]:
@@ -1065,13 +1015,13 @@ class JPEGMetadataParser:
                 pass # TBD
             elif marker == JPEG_APP1:
                 log("Enter", "[APP1]", "add")
-                header = self._file.read(4)
+                header = getChar(self._file, 4)
                 log("header = %s"%(header))
                 if header.lower() == 'exif':
                     self.__parseAPP1(curPos+6, curPos, curPos+length-2)
                 elif header.lower() == 'http':
-                    self._file.seek(curPos)
-                    xmpBuffer = self._file.read(length)
+                    seekTo(self._file, curPos)
+                    xmpBuffer = getChar(self._file, length)
                     checkURL = "http://ns.adobe.com/xap/1.0/"
                     if xmpBuffer.startswith(checkURL):
                         headLen = len(checkURL)
@@ -1088,7 +1038,7 @@ class JPEGMetadataParser:
                 log("Enter", "[APP13]", "add")
                 log("Leave", "[APP13]", "remove")
                 pass # TBD
-            self._file.seek(curPos+length-2)
+            seekTo(self._file, curPos+length-2)
 
 import argparse
 if __name__ == '__main__':
