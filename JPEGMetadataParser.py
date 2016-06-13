@@ -605,15 +605,6 @@ dicTagToVal = {'AliasLayerMetadata': 50784,
  'YPosition': 287,
  'YResolution': 283}
 # ===========================================================
-lstMsgTags = []
-def log(msg, tag=None, op=None):
-    if op == 'add' and tag not in lstMsgTags:
-        lstMsgTags.append(tag)
-    strTag = ''.join(lstMsgTags)
-    print strTag + " " + msg
-    if op == 'remove' and tag in lstMsgTags:
-        lstMsgTags.remove(tag)
-
 def getTagStringByValue(value):
     # TODO : Use a pre-calculated map to reduce time & fix the multiple value issue
     strTag = ""
@@ -638,6 +629,7 @@ class IFDEntry:
         assert not (len(self.__value) != 1), "Contains not exact 1 element !"
         return self.__value[0]
 
+from misc import log
 from FileOPs import nowAt, seekTo, getChar, getCharToOrd, getBytes2, getBytes4,\
                     getBytes8, BYTE_ALIGN_INTEL, BYTE_ALIGN_MOTOROLA
 
@@ -856,7 +848,8 @@ class JPEGMetadataParser:
                 log("Wrong ICC Profile format !")
                 return
             seekTo(self._file, curPos+14)
-            self.__parseICCProfile(iccData[2:], iccLen)
+            from ICCProfileParser import ICCProfileParser
+            iccParser = ICCProfileParser(self._file, iccData[2:], iccLen)
         else:
             log("Wrong ICC Profile format !")
             assert False
