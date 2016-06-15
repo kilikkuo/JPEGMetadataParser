@@ -3,6 +3,166 @@ from misc import log
 from FileOPs import nowAt, seekTo, getChar, getCharToOrd, getBytes2, getBytes4,\
                     getBytes8, BYTE_ALIGN_INTEL, BYTE_ALIGN_MOTOROLA
 
+dicTagName2Sig = {
+"AToB0Tag"                  :   "A2B0",
+"AToB1Tag"                  :   "A2B1",
+"AToB2Tag"                  :   "A2B2",
+"blueColorantTag"           :   "bXYZ",
+"blueTRCTag"                :   "bTRC",
+"BToA0Tag"                  :   "B2A0",
+"BToA1Tag"                  :   "B2A1",
+"BToA2Tag"                  :   "B2A2",
+"calibrationDateTimeTag"    :   "calt",
+"charTargetTag"             :   "targ",
+"copyrightTag"              :   "cprt",
+"deviceMfgDescTag"          :   "dmnd",
+"deviceModelDescTag"        :   "dmdd",
+"gamutTag"                  :   "gamt",
+"grayTRCTag"                :   "kTRC",
+"greenColorantTag"          :   "gXYZ",
+"greenTRCTag"               :   "gTRC",
+"luminanceTag"              :   "lumi",
+"measurementTag"            :   "meas",
+"mediaBlackPointTag"        :   "bkpt",
+"mediaWhitePointTag"        :   "wtpt",
+"namedColorTag"             :   "ncol",
+"namedColor2Tag"            :   "ncl2",
+"preview0Tag"               :   "pre0",
+"preview1Tag"               :   "pre1",
+"preview2Tag"               :   "pre2",
+"profileDescriptionTag"     :   "desc",
+"profileSequence-DescTag"   :   "pseq",
+"ps2CRD0Tag"                :   "psd0",
+"ps2CRD1Tag"                :   "psd1",
+"ps2CRD2Tag"                :   "psd2",
+"ps2CRD3Tag"                :   "psd3",
+"ps2CSATag"                 :   "ps2s",
+"ps2RenderingIntentTag"     :   "ps2i",
+"redColorantTag"            :   "rXYZ",
+"redTRCTag"                 :   "rTRC",
+"screeningDescTag"          :   "scrd",
+"screeningTag"              :   "scrn",
+"technologyTag"             :   "tech",
+"ucrbgTag"                  :   "bfd ",
+"viewingCondDescTag"        :   "vued",
+"viewingConditionsTag"      :   "view",
+}
+
+class Type(object):
+    def __init__(self):
+        pass
+
+class Curve(Type):
+    descriptor = "curv"
+    def __init__(self):
+        Type.__init__(self)
+
+class Data(Type):
+    descriptor = "data"
+    def __init__(self):
+        Type.__init__(self)
+
+class DateTime(Type):
+    descriptor = "dtim"
+    def __init__(self):
+        Type.__init__(self)
+
+class Lut16(Type):
+    descriptor = "mft2"
+    def __init__(self):
+        Type.__init__(self)
+
+class Lut8(Type):
+    descriptor = "mft1"
+    def __init__(self):
+        Type.__init__(self)
+
+class Measurement(Type):
+    descriptor = "meas"
+    def __init__(self):
+        Type.__init__(self)
+
+class NamedColor(Type):
+    descriptor = "ncol"
+    def __init__(self):
+        Type.__init__(self)
+
+class NamedColor2(Type):
+    descriptor = "ncol"
+    def __init__(self):
+        Type.__init__(self)
+
+class ProfileSequenceDesc(Type):
+    descriptor = "pseq"
+    def __init__(self):
+        Type.__init__(self)
+
+class S15Fixed16Array(Type):
+    descriptor = "sf32"
+    def __init__(self):
+        Type.__init__(self)
+
+class Screen(Type):
+    descriptor = "scrn"
+    def __init__(self):
+        Type.__init__(self)
+
+class Signature(Type):
+    descriptor = "sig "
+    def __init__(self):
+        Type.__init__(self)
+
+class TextDescription(Type):
+    descriptor = "desc"
+    def __init__(self):
+        Type.__init__(self)
+
+class Text(Type):
+    descriptor = "text"
+    def __init__(self):
+        Type.__init__(self)
+
+class U16Fixed16Array(Type):
+    descriptor = "uf32"
+    def __init__(self):
+        Type.__init__(self)
+
+class Ucrbg(Type):
+    descriptor = "bfd "
+    def __init__(self):
+        Type.__init__(self)
+
+class UInt16Array(Type):
+    descriptor = "ui16"
+    def __init__(self):
+        Type.__init__(self)
+
+class UInt32Array(Type):
+    descriptor = "ui32"
+    def __init__(self):
+        Type.__init__(self)
+
+class UInt64Array(Type):
+    descriptor = "ui64"
+    def __init__(self):
+        Type.__init__(self)
+
+class UInt8Array(Type):
+    descriptor = "ui08"
+    def __init__(self):
+        Type.__init__(self)
+
+class ViewingConditions(Type):
+    descriptor = "view"
+    def __init__(self):
+        Type.__init__(self)
+
+class XYZ(Type):
+    descriptor = "XYZ "
+    def __init__(self):
+        Type.__init__(self)
+
+
 class ICCProfileParser(object):
     def __init__(self, fd, data, length):
         self.__dicICC = {}
