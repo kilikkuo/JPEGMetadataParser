@@ -849,7 +849,8 @@ class JPEGMetadataParser:
                 return
             seekTo(self._file, curPos+14)
             from ICCProfileParser import ICCProfileParser
-            iccParser = ICCProfileParser(self._file, iccData[2:], iccLen)
+            iccParser = ICCProfileParser(self._file)
+            iccParser.parse()
         else:
             log("Wrong ICC Profile format !")
             assert False
