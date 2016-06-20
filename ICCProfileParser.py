@@ -213,8 +213,11 @@ class Signature(Type):
 
 class TextDescription(Type):
     descriptor = "desc"
-    def __init__(self):
-        Type.__init__(self)
+    def __init__(self, sig, asciiDesc, unicodeDesc, scriptDesc):
+        Type.__init__(self, sig)
+        self._asciiDesc = asciiDesc
+        self._uniDesc = unicodeDesc
+        self._scriptDesc = scriptDesc
 
 class Text(Type):
     descriptor = "text"
@@ -317,10 +320,6 @@ def GetSigObject(sig, type, _fd, size):
         log(" cpry content = %s"%(content))
         sigDescObj = Text(sig, content)
         pass
-    elif sig == "dmnd":
-        pass
-    elif sig == "dmdd":
-        pass
     elif sig == "gamt":
         pass
     elif sig == "kTRC":
@@ -350,7 +349,31 @@ def GetSigObject(sig, type, _fd, size):
         pass
     elif sig == "pre2":
         pass
-    elif sig == "desc":
+    elif sig in ["desc", "dmdd", "dmnd", "scrd"]:
+        reserved = getBytes4(_fd)
+        assert reserved == 0
+        asciiCount = getBytes4(_fd)
+        log(" asciiCount = %d"%(asciiCount))
+        asciiInvariantDesc = getChar(_fd, asciiCount)
+        log(" asciiInvariantDesc = %s"%(asciiInvariantDesc))
+        uniLangCode = getBytes4(_fd)
+        uniCount = getBytes4(_fd)
+        log(" uniLangCode, uniCount = %d, %d"%(uniLangCode, uniCount))
+        uniLocalizableDesc = None
+        if uniCount != 0:
+            uniLocalizableDesc = u""
+            for _ in xrange(uniCount):
+                uniLocalizableDesc.join(getBytes2(_fd).decode("utf-8", "ignore"))
+            log(" uniLocalizableDesc = %s"%(uniLocalizableDesc))
+        scriptCode = getBytes2(_fd)
+        scriptCount = getCharToOrd(_fd)
+        log(" scriptCode, scriptCount = %d, %d"%(scriptCode, scriptCount))
+        localMacintoshDesc = None
+        if scriptCount != 0:
+            localMacintoshDesc = getChar(_fd, min(67,scriptCount))
+            log(" localMacintoshDesc = %s"%(localMacintoshDesc))
+        sigDescObj = TextDescription(sig, asciiInvariantDesc,\
+                                     uniLocalizableDesc, localMacintoshDesc)
         pass
     elif sig == "pseq":
         pass
@@ -385,8 +408,6 @@ def GetSigObject(sig, type, _fd, size):
                 tblLookUp.append(v)
             log(" count = %d "%(count))
         sigDescObj = Curve(sig, exp, tblLookUp)
-    elif sig == "scrd":
-        pass
     elif sig == "scrn":
         pass
     elif sig == "tech":
@@ -507,29 +528,7 @@ class ICCProfileParser(object):
                 typeDesc = ''.join(getChar(self._fd) for _ in xrange(4))
                 log("Tag sig(%s) / type(%s) / offset(%d) / size(%d)"%(sig, typeDesc, offset, size))
 
-                sigDescObj = None
-                if typeDesc == "desc":
-                    reserved = getBytes4(self._fd)
-                    assert reserved == 0
-                    asciiCount = getBytes4(self._fd)
-                    log(" asciiCount = %d"%(asciiCount))
-                    asciiInvariantDesc = getChar(self._fd, asciiCount)
-                    log(" asciiInvariantDesc = %s"%(asciiInvariantDesc))
-                    uniLangCode = getBytes4(self._fd)
-                    uniCount = getBytes4(self._fd)
-                    log(" uniLangCode, uniCount = %d, %d"%(uniLangCode, uniCount))
-                    if uniLangCode != 0 and uniCount != 0:
-                        uniLocalizableDesc = getChar(self._fd, uniCount)
-                        log(" uniLocalizableDesc = %s"%(uniLocalizableDesc))
-                    scriptCode = getBytes2(self._fd)
-                    scriptCount = getCharToOrd(self._fd)
-                    log(" scriptCode, scriptCount = %d, %d"%(scriptCode, scriptCount))
-                    if scriptCode != 0 and scriptCount != 0:
-                        localMacintoshDesc = getChar(self._fd, scriptCount)
-                        log(" localMacintoshDesc = %s"%(localMacintoshDesc))
-                else:
-                    sigDescObj = GetSigObject(sig, typeDesc, self._fd, size)
-
+                sigDescObj = GetSigObject(sig, typeDesc, self._fd, size)
                 assert sig not in self.__dicSig2TagInfo, "Check this file, two same sig !"
                 self.__dicSig2TagInfo[sig] = sigDescObj
                 seekTo(self._fd, tagStartPos+12)
