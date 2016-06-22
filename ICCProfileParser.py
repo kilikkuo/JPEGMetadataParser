@@ -34,6 +34,7 @@ dicTagName2Sig = {
 "BToA2Tag"                  :   "B2A2",
 "calibrationDateTimeTag"    :   "calt",
 "charTargetTag"             :   "targ",
+"chromaticAdaptationTag"    :   "chad",
 "copyrightTag"              :   "cprt",
 "deviceMfgDescTag"          :   "dmnd",
 "deviceModelDescTag"        :   "dmdd",
@@ -197,8 +198,9 @@ class ProfileSequenceDesc(Type):
 
 class S15Fixed16Array(Type):
     descriptor = "sf32"
-    def __init__(self):
-        Type.__init__(self)
+    def __init__(self, sig, matArray):
+        Type.__init__(self, sig)
+        self._array = matArray
 
 class Screen(Type):
     descriptor = "scrn"
@@ -218,6 +220,19 @@ class TextDescription(Type):
         self._asciiDesc = asciiDesc
         self._uniDesc = unicodeDesc
         self._scriptDesc = scriptDesc
+
+class MultiLocalizedUnicode(Type):
+    descriptor = "mluc"
+    def __init__(self, sig):
+        Type.__init__(self, sig)
+        self._dicCountry2Lang = {}
+        self._dicCountry2Desc = {}
+
+    def add(self, langCode, countryCode, desc):
+        assert countryCode not in self._dicCountry2Lang, "Same country for language !!"
+        assert countryCode not in self._dicCountry2Desc, "Same country for description !!"
+        self._dicCountry2Lang[countryCode] = langCode
+        self._dicCountry2Desc[countryCode] = desc
 
 class Text(Type):
     descriptor = "text"
@@ -282,7 +297,7 @@ def GetXYZHelper(_fd):
         return CIEXYZ_X, CIEXYZ_Y, CIEXYZ_Z
     return 0, 0, 0
 
-def GetSigObject(sig, type, _fd, size):
+def GetSigObject(sig, type, _fd, size, tagStartPos=None):
     # _fd is already seeked to starting point of data
     # 4bytes type(description) is included in size
     sigDescObj = None
@@ -298,7 +313,7 @@ def GetSigObject(sig, type, _fd, size):
         pass
     elif sig == "A2B2":
         pass
-    elif sig in ["bXYZ", "gXYZ", "rXYZ", "bkpt", "wtpt"]:
+    elif sig in ["bXYZ", "gXYZ", "rXYZ", "bkpt", "wtpt", "lumi"]:
         reserved = getBytes4(_fd)
         assert reserved == 0
         assert size == 20
@@ -320,11 +335,23 @@ def GetSigObject(sig, type, _fd, size):
         log(" cpry content = %s"%(content))
         sigDescObj = Text(sig, content)
         pass
+    elif sig == "chad":
+        reserved = getBytes4(_fd)
+        assert reserved == 0
+        assert size == 44
+        mat = []
+        for _ in xrange(9):
+            intUnsigned = getBytes2(_fd)
+            intSigned = intUnsigned - 65536 if intUnsigned >= 32768 else intUnsigned
+            fracPart = getBytes2(_fd)
+            v = intSigned + float(fracPart) / 65536
+            mat.append(v)
+        log(" chad = %s"%(str(mat)))
+        sigDescObj = S15Fixed16Array(sig, mat)
+        pass
     elif sig == "gamt":
         pass
     elif sig == "kTRC":
-        pass
-    elif sig == "lumi":
         pass
     elif sig == "meas":
         reserved = getBytes4(_fd)
@@ -349,7 +376,31 @@ def GetSigObject(sig, type, _fd, size):
         pass
     elif sig == "pre2":
         pass
-    elif sig in ["desc", "dmdd", "dmnd", "scrd"]:
+    elif sig in ["dscm"]:
+        if type == "mluc":
+            reserved = getBytes4(_fd)
+            assert reserved == 0
+            numOfRecords = getBytes4(_fd)
+            recordSize = getBytes4(_fd)
+            log(" numOfRecords = %d / recordSize = %s"%(numOfRecords, recordSize))
+
+            sigDescObj = MultiLocalizedUnicode(sig)
+            for _ in xrange(numOfRecords):
+                langCode = ''.join(getChar(_fd) for i in xrange(2))
+                langCountryCode = ''.join(getChar(_fd) for i in xrange(2))
+                lenRecordString = getBytes4(_fd)
+                offsetRecordString = getBytes4(_fd)
+
+                here = nowAt(_fd)
+                seekTo(_fd, tagStartPos + offsetRecordString)
+                uniBytes = getChar(_fd, lenRecordString)
+                # TODO : Think a better way to store these special unicode glyph
+                uniChar = unicode(uniBytes, errors='replace')
+                log(" uniChar = %s"%(uniChar))
+                sigDescObj.add(langCode, langCountryCode, uniChar)
+                seekTo(_fd, here)
+
+    elif sig in ["desc", "dmdd", "dmnd", "scrd", "vued"]:
         reserved = getBytes4(_fd)
         assert reserved == 0
         asciiCount = getBytes4(_fd)
@@ -525,10 +576,10 @@ class ICCProfileParser(object):
                 offset = getBytes4(self._fd)
                 size = getBytes4(self._fd)
                 seekTo(self._fd, basePos+offset)
+                log("Tag sig(%s) / offset(%d) / size(%d) / basePos(%d) / tagSigPos(%d) / tagTypePos(%d) "%(sig, offset, size, basePos, tagStartPos, basePos+offset))
                 typeDesc = ''.join(getChar(self._fd) for _ in xrange(4))
-                log("Tag sig(%s) / type(%s) / offset(%d) / size(%d)"%(sig, typeDesc, offset, size))
-
-                sigDescObj = GetSigObject(sig, typeDesc, self._fd, size)
+                log("Type Desc(%s)"%(typeDesc))
+                sigDescObj = GetSigObject(sig, typeDesc, self._fd, size, basePos+offset)
                 assert sig not in self.__dicSig2TagInfo, "Check this file, two same sig !"
                 self.__dicSig2TagInfo[sig] = sigDescObj
                 seekTo(self._fd, tagStartPos+12)
