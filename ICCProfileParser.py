@@ -143,6 +143,14 @@ hex(1)  :   '0/45 or 45/0',
 hex(2)  :   '0/d or d/0',
 }
 
+dicColorimetricIntentImageState2Desc = {
+'scoe'  :   'Scene colorimetry estimates',
+'sape'  :   'Scene appearance estimates',
+'fpce'  :   'Focal plane colorimetry estimates',
+'rhoc'  :   'Reflection hardcopy original colorimetry',
+'rpoc'  :   'Reflection print output colorimetry',
+}
+
 class Type(object):
     def __init__(self, sig=None):
         assert sig != None, "input sig should be something !!"
@@ -155,6 +163,18 @@ class Curve(Type):
         Type.__init__(self, sig)
         self._exp = exp
         self._lookUp = table
+
+class ParaCurve(Type):
+    descriptor = "para"
+    def __init__(self, sig, g, a=None, b=None, c=None, d=None, e=None, f=None):
+        Type.__init__(self, sig)
+        self._g = g
+        self._a = a
+        self._b = b
+        self._c = c
+        self._d = d
+        self._e = e
+        self._f = f
 
 class Data(Type):
     descriptor = "data"
@@ -175,6 +195,16 @@ class Lut8(Type):
     descriptor = "mft1"
     def __init__(self):
         Type.__init__(self)
+
+class LutAToB(Type):
+    descriptor = "mAB "
+    def __init__(self, sig, lstCurveB=None, matM=None, lstCurveM=None, clut=None, lstCurveA=None):
+        Type.__init__(self, sig)
+        self._lstCurveB = lstCurveB
+        self._matM = matM
+        self._lstCurveM = lstCurveM
+        self._clut = clut
+        self._lstCurveA = lstCurveA
 
 class Measurement(Type):
     descriptor = "meas"
@@ -297,21 +327,210 @@ def GetXYZHelper(_fd):
         return CIEXYZ_X, CIEXYZ_Y, CIEXYZ_Z
     return 0, 0, 0
 
+def GetCurveHelper(_fd, sig):
+    reserved = getBytes4(_fd)
+    assert reserved == 0
+    count = getBytes4(_fd)
+
+    exp = None
+    tblLookUp = []
+    if count in [0, 1]:
+        first = 1.0 if count == 0 else getCharToOrd(_fd)
+        second = 0.0 if count == 0 else getCharToOrd(_fd)
+        exp = first + float(second/256.0)
+        log(" count = %d / exp(%f)"%(count, exp))
+    else:
+        for _ in xrange(count):
+            first, second = getCharToOrd(_fd), getCharToOrd(_fd)
+            v = first + float(second/256.0)
+            tblLookUp.append(v)
+        log(" count = %d "%(count))
+    sigDescObj = Curve(sig, exp, tblLookUp)
+    return sigDescObj
+
+def GetMlucHelper(_fd, sig, tagStartPos):
+    reserved = getBytes4(_fd)
+    assert reserved == 0
+    numOfRecords = getBytes4(_fd)
+    recordSize = getBytes4(_fd)
+    log(" numOfRecords = %d / recordSize = %s"%(numOfRecords, recordSize))
+
+    sigDescObj = MultiLocalizedUnicode(sig)
+    for _ in xrange(numOfRecords):
+        langCode = ''.join(getChar(_fd) for i in xrange(2))
+        langCountryCode = ''.join(getChar(_fd) for i in xrange(2))
+        lenRecordString = getBytes4(_fd)
+        offsetRecordString = getBytes4(_fd)
+
+        here = nowAt(_fd)
+        seekTo(_fd, tagStartPos + offsetRecordString)
+        uniBytes = getChar(_fd, lenRecordString)
+        # TODO : Think a better way to store these special unicode glyph
+        uniChar = unicode(uniBytes, errors='replace')
+        log(" uniChar = %s"%(uniChar))
+        sigDescObj.add(langCode, langCountryCode, uniChar)
+        seekTo(_fd, here)
+    return sigDescObj
+
+def GetParaCurveHelper(_fd, sig):
+    reserved = getBytes4(_fd)
+    assert reserved == 0
+    funcType = getBytes2(_fd)
+    reserved2 = getBytes2(_fd)
+    assert reserved2 == 0
+    para_g = para_a = para_b = para_c = para_d = para_e = para_f = None
+    def GetS15Fixed16Number(_fd):
+        intUnsigned = getBytes2(_fd)
+        intSigned = intUnsigned - 65536 if intUnsigned >= 32768 else intUnsigned
+        fracPart = getBytes2(_fd)
+        v = intSigned + float(fracPart) / 65536
+        return v
+
+    if funcType == 0:
+        para_g = GetS15Fixed16Number(_fd)
+    elif funcType == 1:
+        para_g = GetS15Fixed16Number(_fd)
+        para_a = GetS15Fixed16Number(_fd)
+        para_b = GetS15Fixed16Number(_fd)
+    elif funcType == 2:
+        para_g = GetS15Fixed16Number(_fd)
+        para_a = GetS15Fixed16Number(_fd)
+        para_b = GetS15Fixed16Number(_fd)
+        para_c = GetS15Fixed16Number(_fd)
+    elif funcType == 3:
+        para_g = GetS15Fixed16Number(_fd)
+        para_a = GetS15Fixed16Number(_fd)
+        para_b = GetS15Fixed16Number(_fd)
+        para_c = GetS15Fixed16Number(_fd)
+        para_d = GetS15Fixed16Number(_fd)
+    elif funcType == 4:
+        para_g = GetS15Fixed16Number(_fd)
+        para_a = GetS15Fixed16Number(_fd)
+        para_b = GetS15Fixed16Number(_fd)
+        para_c = GetS15Fixed16Number(_fd)
+        para_d = GetS15Fixed16Number(_fd)
+        para_e = GetS15Fixed16Number(_fd)
+        para_f = GetS15Fixed16Number(_fd)
+    sigDescObj = ParaCurve(sig, para_g, para_a, para_b, para_c, para_d,\
+                           para_e, para_f)
+    log(" ParaCurve - g(%f), a(%f), b(%f), c(%f), d(%f), e(%f), f(%f)"%(\
+        para_g, para_a, para_b, para_c, para_d, para_e, para_f))
+    return sigDescObj
+
+def GetAToBHelper(_fd, sig, tagStartPos):
+    reserved = getBytes4(_fd)
+    assert reserved == 0
+    numOfInputChannel = getCharToOrd(_fd)
+    numOfOutputChannel = getCharToOrd(_fd)
+    padding = getBytes2(_fd)
+    log(" Input(%d) , Output(%d), padding(%d)"%(numOfInputChannel, numOfOutputChannel, padding))
+    assert padding == 0
+
+    sigDescObj = None
+    lstBCurve = []
+    mMat = None
+    lstMCurve = []
+    clut = None
+    lstACurve = []
+
+    offset2BCurve = getBytes4(_fd)
+    if offset2BCurve != 0:
+        here = nowAt(_fd)
+        seekTo(_fd, tagStartPos + offset2BCurve)
+        for _ in xrange(numOfOutputChannel):
+            subType = getChar(_fd, 4)
+            log(" B Curve subtype = %s"%(subType))
+            if subType == "para":
+                sigSubDescObj = GetParaCurveHelper(_fd, sig)
+                lstBCurve.append(sigSubDescObj)
+            elif subType == "curv":
+                sigSubDescObj = GetCurveHelper(_fd, sig)
+                lstBCurve.append(sigSubDescObj)
+        seekTo(_fd, here)
+        assert len(lstBCurve) == numOfOutputChannel
+
+    offset2Matrix = getBytes4(_fd)
+    if offset2Matrix != 0:
+        here = nowAt(_fd)
+        seekTo(_fd, tagStartPos + offset2Matrix)
+        mat = []
+        for _ in xrange(12):
+            intUnsigned = getBytes2(_fd)
+            intSigned = intUnsigned - 65536 if intUnsigned >= 32768 else intUnsigned
+            fracPart = getBytes2(_fd)
+            v = intSigned + float(fracPart) / 65536
+            mat.append(v)
+        log(" Matrix = %s"%(str(mat)))
+        mMat = S15Fixed16Array(sig, mat)
+        seekTo(_fd, here)
+
+    offset2MCurve = getBytes4(_fd)
+    if offset2MCurve != 0:
+        here = nowAt(_fd)
+        seekTo(_fd, tagStartPos + offset2MCurve)
+        for _ in xrange(numOfOutputChannel):
+            subType = getChar(_fd, 4)
+            log(" M Curve subtype = %s"%(subType))
+            if subType == "para":
+                sigSubDescObj = GetParaCurveHelper(_fd, sig)
+                lstMCurve.append(sigSubDescObj)
+            elif subType == "curv":
+                sigSubDescObj = GetCurveHelper(_fd, sig)
+                lstMCurve.append(sigSubDescObj)
+        seekTo(_fd, here)
+        assert len(lstMCurve) == numOfOutputChannel
+
+    offset2CLUT = getBytes4(_fd)
+    if offset2CLUT != 0:
+        # TODO : Not implement yet
+        here = nowAt(_fd)
+        seekTo(_fd, tagStartPos + offset2CLUT)
+        seekTo(_fd, here)
+
+    offset2ACurve = getBytes4(_fd)
+    if offset2ACurve != 0:
+        # TODO : Need to check correctness
+        here = nowAt(_fd)
+        seekTo(_fd, tagStartPos + offset2ACurve)
+        for _ in xrange(numOfOutputChannel):
+            subType = getChar(_fd, 4)
+            log(" M Curve subtype = %s"%(subType))
+            if subType == "para":
+                sigSubDescObj = GetParaCurveHelper(_fd, sig)
+                lstACurve.append(sigSubDescObj)
+            elif subType == "curv":
+                sigSubDescObj = GetCurveHelper(_fd, sig)
+                lstACurve.append(sigSubDescObj)
+        seekTo(_fd, here)
+        assert len(lstACurve) == numOfOutputChannel
+
+    log(" O2B(%d) / O2mat(%d) / O2M(%d) / O2CLUT(%d) / O2A(%d)"%(offset2BCurve,\
+        offset2Matrix, offset2MCurve, offset2CLUT, offset2ACurve))
+
+    sigDescObj = LutAToB(sig, lstBCurve, mMat, lstMCurve, clut, lstACurve)
+    return sigDescObj
+
 def GetSigObject(sig, type, _fd, size, tagStartPos=None):
     # _fd is already seeked to starting point of data
     # 4bytes type(description) is included in size
     sigDescObj = None
     if sig == "A2B0":
+        if type == "mAB ":
+            sigDescObj = GetAToBHelper(_fd, sig, tagStartPos)
+        elif type == "mft2":
+            pass
         pass
     elif sig == "A2B1":
-        pass
-    elif sig == "A2B1":
-        pass
-    elif sig == "A2B0":
-        pass
-    elif sig == "A2B1":
+        if type == "mAB ":
+            sigDescObj = GetAToBHelper(_fd, sig, tagStartPos)
+        elif type == "mft2":
+            pass
         pass
     elif sig == "A2B2":
+        if type == "mAB ":
+            sigDescObj = GetAToBHelper(_fd, sig, tagStartPos)
+        elif type == "mft2":
+            pass
         pass
     elif sig in ["bXYZ", "gXYZ", "rXYZ", "bkpt", "wtpt", "lumi"]:
         reserved = getBytes4(_fd)
@@ -328,12 +547,19 @@ def GetSigObject(sig, type, _fd, size, tagStartPos=None):
         pass
     elif sig == "calt":
         pass
+    elif sig == "ciis":
+        content = ''.join(getChar(_fd) for _ in xrange(size-4)).strip('\0x00')
+        log(" ciis content = %s "%(dicColorimetricIntentImageState2Desc.get(content, "Unknown")))
+        sigDescObj = Signature(sig, content)
     elif sig == "targ":
         pass
     elif sig == "cprt":
-        content = ''.join(getChar(_fd) for _ in xrange(size-4))
-        log(" cpry content = %s"%(content))
-        sigDescObj = Text(sig, content)
+        if type == "mluc":
+            sigDescObj = GetMlucHelper(_fd, sig, tagStartPos)
+        else:
+            content = ''.join(getChar(_fd) for _ in xrange(size-4))
+            log(" cpry content = %s"%(content))
+            sigDescObj = Text(sig, content)
         pass
     elif sig == "chad":
         reserved = getBytes4(_fd)
@@ -378,53 +604,36 @@ def GetSigObject(sig, type, _fd, size, tagStartPos=None):
         pass
     elif sig in ["dscm"]:
         if type == "mluc":
-            reserved = getBytes4(_fd)
-            assert reserved == 0
-            numOfRecords = getBytes4(_fd)
-            recordSize = getBytes4(_fd)
-            log(" numOfRecords = %d / recordSize = %s"%(numOfRecords, recordSize))
-
-            sigDescObj = MultiLocalizedUnicode(sig)
-            for _ in xrange(numOfRecords):
-                langCode = ''.join(getChar(_fd) for i in xrange(2))
-                langCountryCode = ''.join(getChar(_fd) for i in xrange(2))
-                lenRecordString = getBytes4(_fd)
-                offsetRecordString = getBytes4(_fd)
-
-                here = nowAt(_fd)
-                seekTo(_fd, tagStartPos + offsetRecordString)
-                uniBytes = getChar(_fd, lenRecordString)
-                # TODO : Think a better way to store these special unicode glyph
-                uniChar = unicode(uniBytes, errors='replace')
-                log(" uniChar = %s"%(uniChar))
-                sigDescObj.add(langCode, langCountryCode, uniChar)
-                seekTo(_fd, here)
+            sigDescObj = GetMlucHelper(_fd, sig, tagStartPos)
 
     elif sig in ["desc", "dmdd", "dmnd", "scrd", "vued"]:
-        reserved = getBytes4(_fd)
-        assert reserved == 0
-        asciiCount = getBytes4(_fd)
-        log(" asciiCount = %d"%(asciiCount))
-        asciiInvariantDesc = getChar(_fd, asciiCount)
-        log(" asciiInvariantDesc = %s"%(asciiInvariantDesc))
-        uniLangCode = getBytes4(_fd)
-        uniCount = getBytes4(_fd)
-        log(" uniLangCode, uniCount = %d, %d"%(uniLangCode, uniCount))
-        uniLocalizableDesc = None
-        if uniCount != 0:
-            uniLocalizableDesc = u""
-            for _ in xrange(uniCount):
-                uniLocalizableDesc.join(getBytes2(_fd).decode("utf-8", "ignore"))
-            log(" uniLocalizableDesc = %s"%(uniLocalizableDesc))
-        scriptCode = getBytes2(_fd)
-        scriptCount = getCharToOrd(_fd)
-        log(" scriptCode, scriptCount = %d, %d"%(scriptCode, scriptCount))
-        localMacintoshDesc = None
-        if scriptCount != 0:
-            localMacintoshDesc = getChar(_fd, min(67,scriptCount))
-            log(" localMacintoshDesc = %s"%(localMacintoshDesc))
-        sigDescObj = TextDescription(sig, asciiInvariantDesc,\
-                                     uniLocalizableDesc, localMacintoshDesc)
+        if type == "mluc":
+            sigDescObj = GetMlucHelper(_fd, sig, tagStartPos)
+        else:
+            reserved = getBytes4(_fd)
+            assert reserved == 0
+            asciiCount = getBytes4(_fd)
+            log(" asciiCount = %d"%(asciiCount))
+            asciiInvariantDesc = getChar(_fd, asciiCount)
+            log(" asciiInvariantDesc = %s"%(asciiInvariantDesc))
+            uniLangCode = getBytes4(_fd)
+            uniCount = getBytes4(_fd)
+            log(" uniLangCode, uniCount = %d, %d"%(uniLangCode, uniCount))
+            uniLocalizableDesc = None
+            if uniCount != 0:
+                uniLocalizableDesc = u""
+                for _ in xrange(uniCount):
+                    uniLocalizableDesc.join(getBytes2(_fd).decode("utf-8", "ignore"))
+                log(" uniLocalizableDesc = %s"%(uniLocalizableDesc))
+            scriptCode = getBytes2(_fd)
+            scriptCount = getCharToOrd(_fd)
+            log(" scriptCode, scriptCount = %d, %d"%(scriptCode, scriptCount))
+            localMacintoshDesc = None
+            if scriptCount != 0:
+                localMacintoshDesc = getChar(_fd, min(67,scriptCount))
+                log(" localMacintoshDesc = %s"%(localMacintoshDesc))
+            sigDescObj = TextDescription(sig, asciiInvariantDesc,\
+                                         uniLocalizableDesc, localMacintoshDesc)
         pass
     elif sig == "pseq":
         pass
@@ -441,24 +650,7 @@ def GetSigObject(sig, type, _fd, size, tagStartPos=None):
     elif sig == "ps2i":
         pass
     elif sig in ["rTRC", "gTRC", "bTRC"]:
-        reserved = getBytes4(_fd)
-        assert reserved == 0
-        count = getBytes4(_fd)
-
-        exp = None
-        tblLookUp = []
-        if count in [0, 1]:
-            first = 1.0 if count == 0 else getCharToOrd(_fd)
-            second = 0.0 if count == 0 else getCharToOrd(_fd)
-            exp = first + float(second/256.0)
-            log(" count = %d / exp(%f)"%(count, exp))
-        else:
-            for _ in xrange(count):
-                first, second = getCharToOrd(_fd), getCharToOrd(_fd)
-                v = first + float(second/256.0)
-                tblLookUp.append(v)
-            log(" count = %d "%(count))
-        sigDescObj = Curve(sig, exp, tblLookUp)
+        sigDescObj = GetCurveHelper(_fd, sig)
     elif sig == "scrn":
         pass
     elif sig == "tech":
