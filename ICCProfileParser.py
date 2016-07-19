@@ -314,18 +314,19 @@ class XYZ(Type):
         Type.__init__(self, sig)
         self._XYZ = (X, Y, Z)
 
+def GetS15Fixed16Number(_fd):
+    intUnsigned = getBytes2(_fd)
+    intSigned = intUnsigned - 65536 if intUnsigned >= 32768 else intUnsigned
+    fracPart = getBytes2(_fd)
+    v = intSigned + float(fracPart) / 65536
+    return v
+
 def GetXYZHelper(_fd):
     assert _fd, "_fd should not be null !"
-    intX, intY, intZ = getBytes4(_fd), getBytes4(_fd), getBytes4(_fd)
-    if intX != 0 and intY != 0 and intZ != 0:
-        X = struct.unpack('f', struct.pack('i', intX))
-        Y = struct.unpack('f', struct.pack('i', intY))
-        Z = struct.unpack('f', struct.pack('i', intZ))
-        CIEXYZ_X = X[0] / Y[0]
-        CIEXYZ_Y = Y[0] / Y[0]
-        CIEXYZ_Z = Z[0] / Y[0]
-        return CIEXYZ_X, CIEXYZ_Y, CIEXYZ_Z
-    return 0, 0, 0
+    X = GetS15Fixed16Number(_fd)
+    Y = GetS15Fixed16Number(_fd)
+    Z = GetS15Fixed16Number(_fd)
+    return X, Y, Z
 
 def GetCurveHelper(_fd, sig):
     reserved = getBytes4(_fd)
@@ -379,12 +380,6 @@ def GetParaCurveHelper(_fd, sig):
     reserved2 = getBytes2(_fd)
     assert reserved2 == 0
     para_g = para_a = para_b = para_c = para_d = para_e = para_f = None
-    def GetS15Fixed16Number(_fd):
-        intUnsigned = getBytes2(_fd)
-        intSigned = intUnsigned - 65536 if intUnsigned >= 32768 else intUnsigned
-        fracPart = getBytes2(_fd)
-        v = intSigned + float(fracPart) / 65536
-        return v
 
     if funcType == 0:
         para_g = GetS15Fixed16Number(_fd)
