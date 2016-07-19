@@ -206,6 +206,16 @@ class LutAToB(Type):
         self._clut = clut
         self._lstCurveA = lstCurveA
 
+class LutBToA(Type):
+    descriptor = "mBA "
+    def __init__(self, sig, lstCurveB=None, matM=None, lstCurveM=None, clut=None, lstCurveA=None):
+        Type.__init__(self, sig)
+        self._lstCurveB = lstCurveB
+        self._matM = matM
+        self._lstCurveM = lstCurveM
+        self._clut = clut
+        self._lstCurveA = lstCurveA
+
 class Measurement(Type):
     descriptor = "meas"
     def __init__(self, sig, stdObserver, tristimulus, geometry, flare, stdIlluminant):
@@ -408,11 +418,12 @@ def GetParaCurveHelper(_fd, sig):
         para_f = GetS15Fixed16Number(_fd)
     sigDescObj = ParaCurve(sig, para_g, para_a, para_b, para_c, para_d,\
                            para_e, para_f)
-    log(" ParaCurve - g(%f), a(%f), b(%f), c(%f), d(%f), e(%f), f(%f)"%(\
-        para_g, para_a, para_b, para_c, para_d, para_e, para_f))
+    log(" ParaCurve - g(%s), a(%s), b(%s), c(%s), d(%s), e(%s), f(%s)"%(\
+        str(para_g), str(para_a), str(para_b), str(para_c), str(para_d),\
+        str(para_e), str(para_f)))
     return sigDescObj
 
-def GetAToBHelper(_fd, sig, tagStartPos):
+def GetAToBHelper(_fd, sig, tagStartPos, reverse=False):
     reserved = getBytes4(_fd)
     assert reserved == 0
     numOfInputChannel = getCharToOrd(_fd)
@@ -502,8 +513,14 @@ def GetAToBHelper(_fd, sig, tagStartPos):
     log(" O2B(%d) / O2mat(%d) / O2M(%d) / O2CLUT(%d) / O2A(%d)"%(offset2BCurve,\
         offset2Matrix, offset2MCurve, offset2CLUT, offset2ACurve))
 
-    sigDescObj = LutAToB(sig, lstBCurve, mMat, lstMCurve, clut, lstACurve)
+    if reverse:
+        sigDescObj = LutBToA(sig, lstBCurve, mMat, lstMCurve, clut, lstACurve)
+    else:
+        sigDescObj = LutAToB(sig, lstBCurve, mMat, lstMCurve, clut, lstACurve)
     return sigDescObj
+
+def GetBToAHelper(_fd, sig, tagStartPos):
+    return GetAToBHelper(_fd, sig, tagStartPos, True)
 
 def GetSigObject(sig, type, _fd, size, tagStartPos=None):
     # _fd is already seeked to starting point of data
@@ -535,6 +552,8 @@ def GetSigObject(sig, type, _fd, size, tagStartPos=None):
         log(" XYZ = (%f, %f, %f)"%(X, Y, Z))
         sigDescObj = XYZ(sig, X, Y, Z)
     elif sig == "B2A0":
+        if type == "mBA ":
+            sigDescObj = GetBToAHelper(_fd, sig, tagStartPos)
         pass
     elif sig == "B2A1":
         pass
