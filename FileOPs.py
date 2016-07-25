@@ -31,6 +31,16 @@ def getBytes2(f, order=BYTE_ALIGN_MOTOROLA):
     else:
         return L | H << 8
 
+def getBytes3(f, order=BYTE_ALIGN_MOTOROLA):
+    # 0x4d4d for MM / 0x4949 for II.
+    L = getCharToOrd(f)
+    M = getCharToOrd(f)
+    H = getCharToOrd(f)
+    if order == BYTE_ALIGN_MOTOROLA:
+        return L << 16 | M << 8 | H
+    else:
+        return L | M << 8 | H << 16
+
 def getBytes4(f, order=BYTE_ALIGN_MOTOROLA):
     # 0x4d4d for MM / 0x4949 for II.
     LL = getCharToOrd(f)

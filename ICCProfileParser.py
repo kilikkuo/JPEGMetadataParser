@@ -1,7 +1,7 @@
 import weakref
 from misc import log
 from FileOPs import nowAt, seekTo, getChar, getCharToOrd, getBytes2, getBytes4,\
-                    getBytes8, BYTE_ALIGN_INTEL, BYTE_ALIGN_MOTOROLA
+                    getBytes8, BYTE_ALIGN_INTEL, BYTE_ALIGN_MOTOROLA, getBytes3
 import pprint
 import struct
 
@@ -488,19 +488,41 @@ def GetAToBHelper(_fd, sig, tagStartPos, reverse=False):
 
     offset2CLUT = getBytes4(_fd)
     if offset2CLUT != 0:
-        # TODO : Not implement yet
+        # TODO : Check the implementation correctness
         here = nowAt(_fd)
         seekTo(_fd, tagStartPos + offset2CLUT)
+
+        lstGridPoints = []
+        for _ in xrange(16):
+            gridPts = getCharToOrd(_fd)
+            if _ >= numOfInputChannel:
+                assert gridPts == 0
+            lstGridPoints.append(gridPts)
+        precision = getCharToOrd(_fd)
+        padding = getBytes3(_fd)
+        log(" >>> lstGridPoints : %s"%(str(lstGridPoints)))
+        log(" >>> precision : %s / padding %s "%(str(precision), str(padding)))
+        assert padding == 0
+        getDataPoint = getBytes2 if precision == 2 else getCharToOrd
+
+        for _ in xrange(len(lstGridPoints)):
+            if lstGridPoints[_] == 0:
+                continue
+            dictDim = {}
+            for __ in xrange(lstGridPoints[_]):
+                dictDim[__] = []
+                for ___ in xrange(numOfOutputChannel):
+                    dictDim[__].append(getDataPoint(_fd))
+            log(" >>> lstDimPts(%d) : %s"%(__, str(dictDim)))
         seekTo(_fd, here)
 
     offset2ACurve = getBytes4(_fd)
     if offset2ACurve != 0:
-        # TODO : Need to check correctness
         here = nowAt(_fd)
         seekTo(_fd, tagStartPos + offset2ACurve)
         for _ in xrange(numOfOutputChannel):
             subType = getChar(_fd, 4)
-            log(" M Curve subtype = %s"%(subType))
+            log(" A Curve subtype = %s"%(subType))
             if subType == "para":
                 sigSubDescObj = GetParaCurveHelper(_fd, sig)
                 lstACurve.append(sigSubDescObj)
@@ -556,6 +578,8 @@ def GetSigObject(sig, type, _fd, size, tagStartPos=None):
             sigDescObj = GetBToAHelper(_fd, sig, tagStartPos)
         pass
     elif sig == "B2A1":
+        if type == "mBA ":
+            sigDescObj = GetBToAHelper(_fd, sig, tagStartPos)
         pass
     elif sig == "B2A2":
         pass
@@ -663,6 +687,10 @@ def GetSigObject(sig, type, _fd, size, tagStartPos=None):
         pass
     elif sig == "ps2i":
         pass
+    elif sig == "rig0":
+        content = ''.join(getChar(_fd) for _ in xrange(size-4)).strip('\0x00')
+        log(" rig0 content = %s "%(content))
+        sigDescObj = Signature(sig, content)
     elif sig in ["rTRC", "gTRC", "bTRC"]:
         sigDescObj = GetCurveHelper(_fd, sig)
     elif sig == "scrn":
