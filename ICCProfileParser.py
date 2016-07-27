@@ -188,8 +188,12 @@ class DateTime(Type):
 
 class Lut16(Type):
     descriptor = "mft2"
-    def __init__(self):
-        Type.__init__(self)
+    def __init__(self, sig, matM=None, lstInputTables=None, clut=None, lstOutputTables=None):
+        Type.__init__(self, sig)
+        self._matM = matM
+        self._lstInputTables = lstInputTables
+        self._clut = clut
+        self._lstOutputTables = lstOutputTables
 
 class Lut8(Type):
     descriptor = "mft1"
@@ -436,7 +440,7 @@ def GetAToBHelper(_fd, sig, tagStartPos, reverse=False):
     lstBCurve = []
     mMat = None
     lstMCurve = []
-    clut = None
+    clut = []
     lstACurve = []
 
     offset2BCurve = getBytes4(_fd)
@@ -505,15 +509,14 @@ def GetAToBHelper(_fd, sig, tagStartPos, reverse=False):
         assert padding == 0
         getDataPoint = getBytes2 if precision == 2 else getCharToOrd
 
-        for _ in xrange(len(lstGridPoints)):
-            if lstGridPoints[_] == 0:
-                continue
-            dictDim = {}
-            for __ in xrange(lstGridPoints[_]):
-                dictDim[__] = []
-                for ___ in xrange(numOfOutputChannel):
-                    dictDim[__].append(getDataPoint(_fd))
-            log(" >>> lstDimPts(%d) : %s"%(__, str(dictDim)))
+        def fn(x, y):
+            return x * y if y != 0 else x
+        totalCLUTPts = reduce(fn, lstGridPoints)
+        for _ in xrange(totalCLUTPts):
+            tmp = []
+            for __ in xrange(numOfOutputChannel):
+                tmp.append(getDataPoint(_fd))
+            clut.append(tmp)
         seekTo(_fd, here)
 
     offset2ACurve = getBytes4(_fd)
@@ -544,6 +547,49 @@ def GetAToBHelper(_fd, sig, tagStartPos, reverse=False):
 def GetBToAHelper(_fd, sig, tagStartPos):
     return GetAToBHelper(_fd, sig, tagStartPos, True)
 
+def GetMultiFunctionTableHelper(_fd, sig, tagStartPos):
+    reserved = getBytes4(_fd)
+    assert reserved == 0
+    numOfInputChannel = getCharToOrd(_fd)
+    numOfOutputChannel = getCharToOrd(_fd)
+    numOfCLUTGridPoints = getCharToOrd(_fd)
+    padding = getCharToOrd(_fd)
+    assert padding == 0
+    encodedParas = []
+    for _ in xrange(9):
+        encodedParas.append(GetS15Fixed16Number(_fd))
+    numOfInputTableEntries = getBytes2(_fd)
+    numOfOutputTableEntries = getBytes2(_fd)
+
+    log(" InChannels(%d) / OutChannels(%d) / GridPts(%d) / EncodedPars(%s)"\
+        %(numOfInputChannel, numOfOutputChannel, numOfCLUTGridPoints,\
+          str(encodedParas)))
+    log(" InTableEntries(%d) / OutTableEntries(%d)"\
+        %(numOfInputTableEntries, numOfOutputTableEntries))
+
+    inputTables = []
+    for _ in xrange(numOfInputChannel):
+        tmp = []
+        for __ in xrange(numOfInputTableEntries):
+            tmp.append(getBytes2(_fd))
+        inputTables.append(tmp)
+
+    clut = []
+    for _ in xrange(numOfCLUTGridPoints ** numOfInputChannel):
+        tmp = []
+        for __ in xrange(numOfOutputChannel):
+            tmp.append(getBytes2(_fd))
+        clut.append(tmp)
+
+    outputTables = []
+    for _ in xrange(numOfOutputChannel):
+        tmp = []
+        for __ in xrange(numOfOutputTableEntries):
+            tmp.append(getBytes2(_fd))
+        outputTables.append(tmp)
+
+    return Lut16(sig, encodedParas, inputTables, clut, outputTables)
+
 def GetSigObject(sig, type, _fd, size, tagStartPos=None):
     # _fd is already seeked to starting point of data
     # 4bytes type(description) is included in size
@@ -552,19 +598,19 @@ def GetSigObject(sig, type, _fd, size, tagStartPos=None):
         if type == "mAB ":
             sigDescObj = GetAToBHelper(_fd, sig, tagStartPos)
         elif type == "mft2":
-            pass
+            sigDescObj = GetMultiFunctionTableHelper(_fd, sig, tagStartPos)
         pass
     elif sig == "A2B1":
         if type == "mAB ":
             sigDescObj = GetAToBHelper(_fd, sig, tagStartPos)
         elif type == "mft2":
-            pass
+            sigDescObj = GetMultiFunctionTableHelper(_fd, sig, tagStartPos)
         pass
     elif sig == "A2B2":
         if type == "mAB ":
             sigDescObj = GetAToBHelper(_fd, sig, tagStartPos)
         elif type == "mft2":
-            pass
+            sigDescObj = GetMultiFunctionTableHelper(_fd, sig, tagStartPos)
         pass
     elif sig in ["bXYZ", "gXYZ", "rXYZ", "bkpt", "wtpt", "lumi"]:
         reserved = getBytes4(_fd)
@@ -576,13 +622,18 @@ def GetSigObject(sig, type, _fd, size, tagStartPos=None):
     elif sig == "B2A0":
         if type == "mBA ":
             sigDescObj = GetBToAHelper(_fd, sig, tagStartPos)
-        pass
+        elif type == "mft2":
+            sigDescObj = GetMultiFunctionTableHelper(_fd, sig, tagStartPos)
     elif sig == "B2A1":
         if type == "mBA ":
             sigDescObj = GetBToAHelper(_fd, sig, tagStartPos)
-        pass
+        elif type == "mft2":
+            sigDescObj = GetMultiFunctionTableHelper(_fd, sig, tagStartPos)
     elif sig == "B2A2":
-        pass
+        if type == "mBA ":
+            sigDescObj = GetBToAHelper(_fd, sig, tagStartPos)
+        elif type == "mft2":
+            sigDescObj = GetMultiFunctionTableHelper(_fd, sig, tagStartPos)
     elif sig == "calt":
         pass
     elif sig == "ciis":
