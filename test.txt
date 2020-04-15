@@ -12,3 +12,23 @@ GitLab 會呈現 這 ccc 是舊的 version, “… in version 2 of the diff”
 ** Lock PR **
 ** Project **
 ** Group **
+
+
+In the fictional world of the example above, 
+when a manufacturer is deleted, all cars produced by 
+that manufacturer are deleted (just like real life!). 
+But when car’s owner is deleted, any cars that refer 
+to that user as the owner will set its owner field to 
+null. I like the interface for this and really don’t 
+want to change it .
+
+To keep this behavior consistent in our soft-delete
+ model, we’ll need to do some surgery. The first thing
+  we’ll do is add an_on_delete method that will be 
+  called after a soft-deletable record is deleted. T
+  he goal of this method is to traverse the graph of 
+  objects related to the record we just deleted, and 
+  recursively update or delete each record.
+
+After a LOT of poking around debugging sessions and 
+reading the source, I came up with this:
